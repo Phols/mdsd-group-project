@@ -1,0 +1,9 @@
+grammar dk.sdu.mmmi.SpringBoard with org.eclipse.xtext.common.Terminals
+
+generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
+
+Model:
+	greetings+=Greeting*;
+	
+Greeting:
+	'Hello' name=ID '!';
