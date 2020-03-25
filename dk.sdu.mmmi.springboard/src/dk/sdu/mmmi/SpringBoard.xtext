@@ -56,7 +56,7 @@ CRUD: // See metamodel later
 ;
 
 Methods:
-	isLocal='local'? name=ID ':' type=[Type] inp=Input res=Res?
+	isLocal='local'? name=ID ':' type=Type inp=Input res=Res?
 ;
 
 Res:
@@ -64,7 +64,7 @@ Res:
 ;
 
 Exp:
-	left=[Type] op=Operator right=[Type] (',' next=Exp)?
+	left=[Args] op=Operator right=[Field] (',' next=Exp)?
 ;
 
 Input:
@@ -72,6 +72,6 @@ Input:
 ;
 
 Args:
-	name=ID ':' type=[Type] (',' next=Args)?
+	name=ID ':' type=Type (',' next=Args)?
 ;
 
