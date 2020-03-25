@@ -2,8 +2,76 @@ grammar dk.sdu.mmmi.SpringBoard with org.eclipse.xtext.common.Terminals
 
 generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
 
+SpringBoard:
+	'package' ':' pkg=Package models=Models services=Services
+		
+;
+
+Package:
+	name=ID ('.' next=Package)?
+;
+
+Models:
+	'models' ':' types+=Model+
+;
+
 Model:
-	greetings+=Greeting*;
-	
-Greeting:
-	'Hello' name=ID '!';
+	name=ID inh=Inherit? '{' fields+=Field* '}'
+;
+
+Field:
+	name=ID ':' type=Type (inv=Invariant)?
+;
+
+Invariant:
+	'[' prop=Property op=Operator INT ']'
+;
+
+Property:
+	'length'
+;
+
+Operator:
+	'<' | '>' | '=' | '<=' | '>=' | '<>'
+;
+
+Type:
+	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {ModelType} base=[Model] | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
+;
+
+Inherit:
+	'inherits' base=[Model]
+;
+
+Services:
+	'services' ':' services+=Service+
+;
+
+Service:
+	base=[Model] '{' crud=CRUD? methods+=Methods* '}'
+;
+
+CRUD: // See metamodel later
+	'[' 'C'? 'R'? 'U'? 'D'? ']'
+;
+
+Methods:
+	isLocal='local'? name=ID ':' type=[Type] inp=Input res=Res?
+;
+
+Res:
+	'[' exp=Exp ']'
+;
+
+Exp:
+	left=[Type] op=Operator right=[Type] (',' next=Exp)?
+;
+
+Input:
+	{Input} '(' args+=Args* ')'
+;
+
+Args:
+	name=ID ':' type=[Type] (',' next=Args)?
+;
+
