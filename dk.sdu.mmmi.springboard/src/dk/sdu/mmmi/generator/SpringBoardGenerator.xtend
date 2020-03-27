@@ -7,6 +7,8 @@ import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.generator.AbstractGenerator
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
+import dk.sdu.mmmi.springBoard.SpringBoard
+import dk.sdu.mmmi.springBoard.Package
 
 /**
  * Generates code from your model files on save.
@@ -21,5 +23,20 @@ class SpringBoardGenerator extends AbstractGenerator {
 //				.filter(Greeting)
 //				.map[name]
 //				.join(', '))
+
+		val model = resource.allContents.filter(SpringBoard).next
+		var packName = generatePackageName(model.pkg)
 	}
+	
+	def generatePackageName(Package package1) {
+		var packIter = package1
+		var name = packIter.name
+		
+		while (packIter.next !== null) {
+			packIter = packIter.next
+			name += ('.'+packIter.name)
+		}
+		return name
+	}
+	
 }
