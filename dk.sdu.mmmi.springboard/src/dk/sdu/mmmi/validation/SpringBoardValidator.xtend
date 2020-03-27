@@ -25,10 +25,10 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 //		}
 //	}
 
-	Pattern cPattern = Pattern.compile("([C])\\1{1,}")
-	Pattern rPattern = Pattern.compile("([R])\\1{1,}")
-	Pattern uPattern = Pattern.compile("([U])\\1{1,}")
-	Pattern dPattern = Pattern.compile("([D])\\1{1,}")
+	Pattern cPattern = Pattern.compile("([C]).*([C])")
+	Pattern rPattern = Pattern.compile("([R]).*([R])")
+	Pattern uPattern = Pattern.compile("([U]).*([U])")
+	Pattern dPattern = Pattern.compile("([D]).*([D])")
 
 	@Check
 	def checkCrudActions(CRUD crud) {
