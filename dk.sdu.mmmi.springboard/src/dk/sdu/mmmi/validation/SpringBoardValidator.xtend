@@ -3,6 +3,9 @@
  */
 package dk.sdu.mmmi.validation
 
+import org.eclipse.xtext.validation.Check
+import dk.sdu.mmmi.springBoard.CRUD
+import java.util.regex.Pattern
 
 /**
  * This class contains custom validation rules. 
@@ -21,5 +24,41 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 //					INVALID_NAME)
 //		}
 //	}
+
+	Pattern cPattern = Pattern.compile("([C])\\1{1,}")
+	Pattern rPattern = Pattern.compile("([R])\\1{1,}")
+	Pattern uPattern = Pattern.compile("([U])\\1{1,}")
+	Pattern dPattern = Pattern.compile("([D])\\1{1,}")
+
+	@Check
+	def checkCrudActions(CRUD crud) {
+		
+		val matchString = crud.getAct().toString().replace(", ", "")
+
+		val cMatcher = cPattern.matcher(matchString);
+		
+		if (cMatcher.find()) {
+			error('Only one Create method allowed', crud, null);
+		}
+		
+		val rMatcher = rPattern.matcher(matchString);
+		
+		if (rMatcher.find()) {
+			error('Only one Read method allowed', crud, null);
+		}
+		
+		val uMatcher = uPattern.matcher(matchString);
+		
+		if (uMatcher.find()) {
+			error('Only one Update method allowed', crud , null);
+		}
+		
+		val dMatcher = dPattern.matcher(matchString);
+		
+		if (dMatcher.find()) {
+			error('Only one Delete method allowed', crud, null);
+		}
+		
+	}
 	
 }
