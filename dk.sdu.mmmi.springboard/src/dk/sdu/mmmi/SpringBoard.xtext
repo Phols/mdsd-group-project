@@ -35,7 +35,7 @@ Operator:
 	'<' | '>' | '=' | '<=' | '>=' | '<>'
 ;
 
-Type:
+Type returns Type:
 	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {ModelType} base=[Model] | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
 ;
 
