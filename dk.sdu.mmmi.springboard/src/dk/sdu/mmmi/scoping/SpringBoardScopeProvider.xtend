@@ -14,6 +14,11 @@ import java.util.HashSet
 import dk.sdu.mmmi.springBoard.Model
 import dk.sdu.mmmi.springBoard.SpringBoardPackage.Literals
 import dk.sdu.mmmi.springBoard.Exp
+import dk.sdu.mmmi.springBoard.Models
+import dk.sdu.mmmi.springBoard.Methods
+import dk.sdu.mmmi.springBoard.ListOf
+import dk.sdu.mmmi.springBoard.ModelType
+import dk.sdu.mmmi.springBoard.Type
 
 /**
  * This class contains custom scoping description.
@@ -22,22 +27,40 @@ import dk.sdu.mmmi.springBoard.Exp
  * on how and when to use it.
  */
 class SpringBoardScopeProvider extends AbstractSpringBoardScopeProvider {
-	
-	override IScope getScope(EObject context, EReference reference){
-		if(context instanceof Exp && reference==Literals.EXP__RIGHT) {
-			val seen = new HashSet<Model>
-			var model = EcoreUtil2.getContainerOfType(context,Model)
+
+	override IScope getScope(EObject context, EReference reference) {
+		if (context instanceof Exp && reference == Literals.EXP__RIGHT) {
+			System::out.println(context);
+			val seen = new HashSet<Type>
+			var methods = EcoreUtil2.getContainerOfType(context, Methods);
 			val candidates = new ArrayList<Field>
-			while(model!==null) {
-				if(seen.contains(model)) return super.getScope(context, reference) // scope undefined
-				seen.add(model)
-				candidates.addAll(model.getFields.filter(Field))
-				model = model.inh.base
-			}
+
+			//while (methods !== null) {
+				var type = methods.type;
+				//if(seen.contains(type)) return super.getScope(context, reference)
+				if (type instanceof ListOf) {
+					type = (type as ListOf).type
+					//seen.add(type)
+				}
+				if (type instanceof ModelType) {
+					val model = (type as ModelType).base
+					candidates.addAll(model.getFields.filter(Field))
+				} else {
+
+					return super.getScope(context, reference)
+				}
+			//}
+//			while(model!==null) {
+//				if(seen.contains(model)) return super.getScope(context, reference) // scope undefined
+//				seen.add(model)
+//				for (Model theModel : model.getTypes){
+//				candidates.addAll(theModel.getFields.filter(Field))
+//				
+//				}
+			// model = model.inh.base
+//			}
 			return Scopes.scopeFor(candidates)
 		}
 		return super.getScope(context, reference)
 	}
 }
-
-
