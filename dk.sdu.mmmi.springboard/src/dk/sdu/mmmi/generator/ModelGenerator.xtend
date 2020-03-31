@@ -20,16 +20,32 @@ class ModelGenerator {
 	 * TODO: instead of importing all models, we could check for inheritance and fields using a model type!
 	 */
 	def CharSequence generateModel(Model model, String packName)'''
-	package «packName»;
+	package «packName».model;
 	
 	import java.util.*;
 	import java.time.*;
 	import «packName».model.*;
 	
 	public class «model.name»«IF model.inh!==null» extends «model.inh.base.name»«ENDIF» {
-	«FOR f:model.fields»
+		
+		«FOR f:model.fields»
 		private «computeType(f.type)» _«f.name»;
-	«ENDFOR»
+		«ENDFOR»
+		
+		public «model.name»() { }
+		
+		«FOR f:model.fields»
+		public «computeType(f.type)» get«f.name.toFirstUpper» {
+			return _«f.name»
+		}
+		
+		«ENDFOR»
+		«FOR f:model.fields»
+		public void set«f.name.toFirstUpper» («computeType(f.type)» «f.name» {
+			this._«f.name» = «f.name»;
+		}
+		
+		«ENDFOR»
 	}
 	
 	'''
@@ -47,11 +63,14 @@ class ModelGenerator {
 	}
 	
 	def dispatch computeType(Lon type) {
-		"long"
+		"Long"
 	}
 	
+	/**
+	 * Ignore warning, seems to be a bug?
+	 */
 	def dispatch computeType(Bool type) {
-		"boolean"
+		"Boolean"
 	}
 	
 	def dispatch computeType(ModelType type) {
