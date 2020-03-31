@@ -36,7 +36,11 @@ Operator:
 ;
 
 Type returns Type:
-	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {ModelType} base=[Model] | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
+	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {ModelType} (base=[Model] direction=RelDirection?) | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
+;
+
+RelDirection:
+	'1-1' | '*-1'
 ;
 
 Inherit:
