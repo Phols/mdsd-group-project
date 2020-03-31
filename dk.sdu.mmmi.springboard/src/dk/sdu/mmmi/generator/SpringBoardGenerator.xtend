@@ -9,7 +9,8 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 import dk.sdu.mmmi.springBoard.SpringBoard
 import dk.sdu.mmmi.springBoard.Package
-
+import javax.inject.Inject
+import dk.sdu.mmmi.springBoard.Model
 
 /**
  * Generates code from your model files on save.
@@ -17,7 +18,10 @@ import dk.sdu.mmmi.springBoard.Package
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#code-generation
  */
 class SpringBoardGenerator extends AbstractGenerator {
-
+	
+	@Inject extension ModelGenerator modelGenerator
+	
+	val mavenSrcStructure = "src/main/java/"
 	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 //		fsa.generateFile('greetings.txt', 'People to greet: ' + 
@@ -29,7 +33,13 @@ class SpringBoardGenerator extends AbstractGenerator {
 		val model = resource.allContents.filter(SpringBoard).next
 		val packName = createPackageName(model.pkg)
 		
+		
 		generateSpringProjectStructure(fsa, packName)
+		
+		model.models.types.filter(Model).forEach[ element |
+			modelGenerator.createModel(element, fsa, packName)
+		]
+		
 	}
 	
 	/**
@@ -37,8 +47,8 @@ class SpringBoardGenerator extends AbstractGenerator {
 	 */
 	def generateSpringProjectStructure(IFileSystemAccess2 fsa, String packName) {
 		fsa.generateFile("/pom.xml", generatePom(packName))
-		fsa.generateFile("src/main/java/"+packName.replace('.', '/')+"/DemoApplication.java", generateSource(packName))
-		fsa.generateFile("src/test/java/"+packName.replace('.', '/')+"/DemoApplicationTests.java", generateTest(packName))
+		fsa.generateFile(mavenSrcStructure+packName.replace('.', '/')+"/DemoApplication.java", generateSource(packName))
+		fsa.generateFile(mavenSrcStructure+packName.replace('.', '/')+"/DemoApplicationTests.java", generateTest(packName))
 		fsa.generateFile("src/main/resources/application.properties", generateProperties())
 	}
 	
