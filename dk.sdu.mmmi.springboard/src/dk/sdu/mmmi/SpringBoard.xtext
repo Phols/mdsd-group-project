@@ -52,7 +52,11 @@ Service:
 ;
 
 CRUD: // See metamodel later
-	'[' 'C'? 'R'? 'U'? 'D'? ']'
+	'[' act += CRUDActions* ']'
+;
+
+enum CRUDActions:
+	C | R | U | D
 ;
 
 Methods:
