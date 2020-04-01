@@ -69,11 +69,12 @@ class ModelGenerator {
 	«ENDIF»
 	'''
 	
-	/**
-	 * TODO: figure out how we want to infer relation directions
-	 */
 	def dispatch CharSequence generateTypeAnnotation(ModelType f)'''
+	«IF f.direction == "*"» 
+	@ManyToOne(targetEntity = «f.base.name».class, cascade = CascadeType.ALL)
+	«ELSE»
 	@OneToOne(targetEntity = «f.base.name».class, cascade = CascadeType.ALL)
+	«ENDIF»
 	'''
 	
 	

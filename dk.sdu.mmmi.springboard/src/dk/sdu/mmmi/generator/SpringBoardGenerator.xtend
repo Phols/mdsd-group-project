@@ -22,6 +22,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	@Inject extension ModelGenerator modelGenerator
 	
 	val mavenSrcStructure = "src/main/java/"
+	val mavenTestStructure = "src/test/java/"
 	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 //		fsa.generateFile('greetings.txt', 'People to greet: ' + 
@@ -59,7 +60,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	def generateSpringProjectStructure(IFileSystemAccess2 fsa, String packName) {
 		fsa.generateFile("/pom.xml", generatePom(packName))
 		fsa.generateFile(mavenSrcStructure+packName.replace('.', '/')+"/DemoApplication.java", generateSource(packName))
-		fsa.generateFile(mavenSrcStructure+packName.replace('.', '/')+"/DemoApplicationTests.java", generateTest(packName))
+		fsa.generateFile(mavenTestStructure+packName.replace('.', '/')+"/DemoApplicationTests.java", generateTest(packName))
 		fsa.generateFile("src/main/resources/application.properties", generateProperties())
 	}
 	
