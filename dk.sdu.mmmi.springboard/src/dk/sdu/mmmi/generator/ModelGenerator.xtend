@@ -10,6 +10,7 @@ import dk.sdu.mmmi.springBoard.Bool
 import dk.sdu.mmmi.springBoard.ModelType
 import dk.sdu.mmmi.springBoard.ListOf
 import dk.sdu.mmmi.springBoard.Identifier
+import dk.sdu.mmmi.springBoard.Field
 
 class ModelGenerator {
 	
@@ -52,7 +53,10 @@ class ModelGenerator {
 		
 		«ENDFOR»
 		«FOR f:model.fields»
-		public void set«f.name.toFirstUpper» («computeType(f.type)» «f.name») {
+		public void set«f.name.toFirstUpper» («computeType(f.type)» «f.name») «IF f.inv !== null»throws IllegalArgumentException«ENDIF» {
+			«IF f.inv !== null»
+			«generateInvariant(f)»
+			«ENDIF»
 			this._«f.name» = «f.name»;
 		}
 		
@@ -60,6 +64,23 @@ class ModelGenerator {
 	}
 	
 	'''
+	
+	/**
+	 * TODO: hardcoded length
+	 */
+	def CharSequence generateInvariant(Field f)'''
+	if (!(«f.name».«f.inv.prop»() «generateOperator(f.inv.op)» «f.inv.value»)) {
+		throw new IllegalArgumentException("«f.inv.prop» of «f.name» must be «f.inv.op» «f.inv.value».");
+	}
+	'''
+	
+	def CharSequence generateOperator(String operator) {
+		if (operator == "=") {
+			return "=="
+		} else {
+			return operator
+		}
+	}
 	
 	def dispatch CharSequence generateTypeAnnotation(ListOf f)'''
 	«IF f.type instanceof ModelType»

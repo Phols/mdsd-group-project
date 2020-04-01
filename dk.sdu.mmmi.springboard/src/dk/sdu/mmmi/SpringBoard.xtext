@@ -24,7 +24,7 @@ Field:
 ;
 
 Invariant:
-	'[' prop=Property op=Operator INT ']'
+	'[' prop=Property op=Operator value=INT ']'
 ;
 
 Property:
