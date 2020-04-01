@@ -9,7 +9,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 import dk.sdu.mmmi.springBoard.SpringBoard
 import dk.sdu.mmmi.springBoard.Package
-
+import javax.inject.Inject
 
 /**
  * Generates code from your model files on save.
@@ -18,6 +18,7 @@ import dk.sdu.mmmi.springBoard.Package
  */
 class SpringBoardGenerator extends AbstractGenerator {
 
+	@Inject extension ServiceGenerator serviceGenerator
 	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 //		fsa.generateFile('greetings.txt', 'People to greet: ' + 
@@ -30,6 +31,9 @@ class SpringBoardGenerator extends AbstractGenerator {
 		val packName = createPackageName(model.pkg)
 		
 		generateSpringProjectStructure(fsa, packName)
+		
+		model.services.services.forEach[ element |
+			serviceGenerator.createService(fsa, packName, element)]
 	}
 	
 	/**
