@@ -30,8 +30,8 @@ Property:
 	'length'
 ;
 
-Operator:
-	'<' | '>' | '=' | '<=' | '>=' | '<>'
+Operator returns Operator:
+	{Lt} '<' | {Gt} '>' | {Eq} '=' | {Lteq} '<=' | {Gteq} '>=' | {Neq} '<>'
 ;
 
 Type returns Type:
@@ -63,11 +63,11 @@ Methods:
 ;
 
 Res:
-	'[' exp=Exp ']'
+	'[' comp=Comp']'
 ;
 
-Exp: // Should be called Comparison
-	left=[Args] op=Operator right=[Field] (',' next=Exp)?
+Comp:
+	left=[Args] op=Operator right=[Field] (',' next=Comp)?
 ;
 
 Input:

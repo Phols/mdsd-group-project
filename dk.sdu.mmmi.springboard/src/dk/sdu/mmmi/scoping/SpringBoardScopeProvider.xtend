@@ -10,16 +10,11 @@ import org.eclipse.xtext.EcoreUtil2
 import java.util.ArrayList
 import org.eclipse.xtext.scoping.Scopes
 import dk.sdu.mmmi.springBoard.Field
-import java.util.HashSet
-import dk.sdu.mmmi.springBoard.Model
 import dk.sdu.mmmi.springBoard.SpringBoardPackage.Literals
-import dk.sdu.mmmi.springBoard.Exp
-import dk.sdu.mmmi.springBoard.Models
 import dk.sdu.mmmi.springBoard.Methods
 import dk.sdu.mmmi.springBoard.ListOf
 import dk.sdu.mmmi.springBoard.ModelType
-import dk.sdu.mmmi.springBoard.Type
-import java.util.Collections
+import dk.sdu.mmmi.springBoard.Comp
 
 /**
  * This class contains custom scoping description.
@@ -30,7 +25,7 @@ import java.util.Collections
 class SpringBoardScopeProvider extends AbstractSpringBoardScopeProvider {
 
 	override IScope getScope(EObject context, EReference reference) {
-		if (context instanceof Exp && reference == Literals.EXP__RIGHT) {
+		if (context instanceof Comp && reference == Literals.COMP__RIGHT) {
 			var methods = EcoreUtil2.getContainerOfType(context, Methods);
 			val candidates = new ArrayList<Field>
 
