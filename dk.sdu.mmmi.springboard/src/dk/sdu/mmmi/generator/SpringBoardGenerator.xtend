@@ -40,7 +40,8 @@ class SpringBoardGenerator extends AbstractGenerator {
 		generateSpringProjectStructure(fsa, packName)
 		
 		model.services.services.forEach[ element |
-			serviceGenerator.createService(fsa, packName, element)]
+			serviceGenerator.createService(fsa, packName, element); 
+			serviceGenerator.createAbstractService(fsa, packName, element)]
 		model.models.types.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
 		]

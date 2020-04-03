@@ -21,12 +21,13 @@ class ServiceGenerator {
 		package «packageName».services;
 		
 		import java.util.List;
+		import java.time.LocalDateTime;
 		import «packageName».models.*;
 		
 		public interface I«service.base.name» {
 			
 			«IF service.crud != null»
-				«generateCrud(service)»
+				«generateCrudInterface(service)»
 			«ENDIF»
 			«FOR m:service.methods»
 				«m.type.show» «m.name»(«IF m.inp.args !== null» «m.inp.args.show» «ENDIF»);
@@ -35,7 +36,7 @@ class ServiceGenerator {
 		}
 	'''
 	
-	def CharSequence generateCrud(Service ser)'''
+	def CharSequence generateCrudInterface(Service ser)'''
 		«FOR a:ser.crud.act»
 			«IF a == CRUDActions.C»
 				boolean create(«ser.base.name» _«ser.base.name»);
@@ -62,7 +63,43 @@ class ServiceGenerator {
 		«ENDFOR»
 	'''
 	
-	def dispatch CharSequence show(Dt dt)'''DateTime'''
+	def CharSequence generateMethodStubs(String packageName, Service service)'''
+		package «packageName».services.impl;
+		
+		import java.util.*;
+		import java.time.LocalDateTime;
+		import «packageName».repositories.*;
+		import «packageName».models.*;
+		import «packageName».services.*;
+		
+		public abstract class Abstract«service.base.name»Impl implements I«service.base.name» {
+			
+			protected «service.base.name»Repository repository;
+			
+			public Abstract«service.base.name»Impl(«service.base.name»Repository repository) {
+				this.repository = repository;
+			}
+			
+			«FOR m:service.methods.filter[m | m.res != null]»
+				@Override
+				public «m.type.show» «m.name» («IF m.inp.args !== null» «m.inp.args.show» «ENDIF») {
+				«/*IF m.res.exp.right.type == 'listOF'»
+					for («»  : «m.res.exp.right.name») {
+				«ENDIF*/»
+				if (!(«m.res.exp.left.name» «m.res.exp.op» «m.res.exp.right.name»)) {
+					return null;
+				}
+				«/*IF m.res.exp.right.type == 'listOF'»	
+					}
+				«ENDIF*/»
+				return new «m.type.show»();				
+				}
+			«ENDFOR»
+		}
+	'''
+	
+	
+	def dispatch CharSequence show(Dt dt)'''LocalDateTime'''
 	
 	def dispatch CharSequence show(ListOf lo)'''List<«lo.type.show»>'''
 	
@@ -82,5 +119,9 @@ class ServiceGenerator {
 	
 	def createService(IFileSystemAccess2 fsa, String packageName, Service service) {
 		fsa.generateFile(mavenSrcStructure+packageName.replace('.', '/')+"/services/I"+service.base.name+'.java', generateService(packageName, service))
+	}
+	
+	def createAbstractService(IFileSystemAccess2 fsa, String packageName, Service service) {
+		fsa.generateFile(mavenSrcStructure+packageName.replace('.', '/')+"/services/impl/Abstract"+service.base.name+'Impl.java', generateMethodStubs(packageName, service))
 	}
 }
