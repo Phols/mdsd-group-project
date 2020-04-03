@@ -95,7 +95,5 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 				error("A model must have a single ID field.", SpringBoardPackage.Literals.MODEL__NAME)
 			}
 		}
-		
-		
 	}
 }
