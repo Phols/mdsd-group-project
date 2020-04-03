@@ -6,6 +6,9 @@ package dk.sdu.mmmi.validation
 import org.eclipse.xtext.validation.Check
 import dk.sdu.mmmi.springBoard.CRUD
 import java.util.regex.Pattern
+import dk.sdu.mmmi.springBoard.Model
+import dk.sdu.mmmi.springBoard.SpringBoardPackage
+import dk.sdu.mmmi.springBoard.Identifier
 
 /**
  * This class contains custom validation rules. 
@@ -61,4 +64,39 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 		
 	}
 	
+	/**
+	 * Inspired by Bettini
+	 */
+	@Check
+	def checkNoCycleInEntityHierarchy(Model model) {
+		if (model.inh.base === null)
+			return // nothing to check
+		val visitedEntities = newHashSet(model)
+		var current = model.inh.base
+		while (current !== null) {
+			if (visitedEntities.contains(current)) {
+				error("Cycle in hierarchy of model '"+current.name+"'",
+					SpringBoardPackage.Literals.MODEL__INH)
+				return
+			}
+			visitedEntities.add(current)
+			current = current.inh.base
+		}
+	}
+	
+	@Check
+	def checkOnlySingleIdForModel(Model model) {
+		if (model.inh !== null) {
+			if (!model.fields.filter[ f | f.type instanceof Identifier].empty) {
+				error("Subclasses must not have an ID field.", SpringBoardPackage.Literals.MODEL__FIELDS)
+			}
+		} else {
+			System.out.println(model.fields.filter[ f | f.type instanceof Identifier].size)
+			if (model.fields.filter[ f | f.type instanceof Identifier].size != 1) {
+				error("A model must have a single ID field.", SpringBoardPackage.Literals.MODEL__NAME)
+			}
+		}
+		
+		
+	}
 }
