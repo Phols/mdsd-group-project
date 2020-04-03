@@ -19,7 +19,8 @@ import java.util.ArrayList
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#code-generation
  */
 class SpringBoardGenerator extends AbstractGenerator {
-	
+
+	@Inject extension ServiceGenerator serviceGenerator
 	@Inject extension ModelGenerator modelGenerator
 	@Inject extension RepositoryGenerator repositoryGenerator
 	
@@ -45,6 +46,10 @@ class SpringBoardGenerator extends AbstractGenerator {
 				modelsWithSubClasses.add(individualModel)
 			}
 		}
+
+		model.services.services.forEach[ element |
+			serviceGenerator.createService(fsa, packName, element)]
+      
 		model.models.types.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
 			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses)
@@ -89,7 +94,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	'''
 	
 	def CharSequence generateTest(String packName)'''
-	package «packName»;
+	package Â«packNameÂ»;
 	import org.junit.jupiter.api.Test;
 	import org.springframework.boot.test.context.SpringBootTest;
 	
@@ -133,7 +138,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	    <relativePath/> <!-- lookup parent from repository -->
 	  </parent>
 	  
-	  <groupId>«packName»</groupId>
+	  <groupId>Â«packNameÂ»</groupId>
 	  <artifactId>demo</artifactId>
 	  <version>0.0.1-SNAPSHOT</version>
 	  <name>demo</name>
@@ -184,7 +189,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	'''
 	
 	def CharSequence generateSource(String packName)'''
-	package «packName»;
+	package Â«packNameÂ»;
 	
 	import org.springframework.boot.SpringApplication;
 	import org.springframework.boot.autoconfigure.SpringBootApplication;
