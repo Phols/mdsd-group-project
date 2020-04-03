@@ -1,7 +1,6 @@
 package dk.sdu.mmmi.generator
 
 import org.eclipse.xtext.generator.IFileSystemAccess2
-import org.eclipse.xtext.generator.IGeneratorContext
 import dk.sdu.mmmi.springBoard.Service
 import dk.sdu.mmmi.springBoard.CRUDActions
 import dk.sdu.mmmi.springBoard.Dt
@@ -19,9 +18,10 @@ class ServiceGenerator {
 	val mavenSrcStructure = "src/main/java/"
 	
 	def CharSequence generateService(String packageName, Service service) '''
-		package «packageName»;
+		package «packageName».services;
 		
 		import java.util.List;
+		import «packageName».models.*;
 		
 		public interface I«service.base.name» {
 			
@@ -29,7 +29,7 @@ class ServiceGenerator {
 				«generateCrud(service)»
 			«ENDIF»
 			«FOR m:service.methods»
-				public «m.type.show» «m.name»(«IF m.inp.args !== null» «m.inp.args.show» «ENDIF»);
+				«m.type.show» «m.name»(«IF m.inp.args !== null» «m.inp.args.show» «ENDIF»);
 				 
 			«ENDFOR»
 		}
@@ -38,25 +38,25 @@ class ServiceGenerator {
 	def CharSequence generateCrud(Service ser)'''
 		«FOR a:ser.crud.act»
 			«IF a == CRUDActions.C»
-				public boolean create(«ser.base.name» _«ser.base.name»);
+				boolean create(«ser.base.name» _«ser.base.name»);
 				
 			«ENDIF»
 			«IF a == CRUDActions.R»
-				public List<«ser.base.name»> findAll();
+				List<«ser.base.name»> findAll();
 				
-				public «ser.base.name» find(Long id);
+				«ser.base.name» find(Long id);
 				
 			«ENDIF»
 			«IF a == CRUDActions.U»
-				public boolean update(Long id);
+				boolean update(Long id);
 				
-				public boolean update(«ser.base.name» _«ser.base.name»);
+				boolean update(«ser.base.name» _«ser.base.name»);
 				
 			«ENDIF»
 			«IF a == CRUDActions.D»
-				public boolean delete(Long id);
+				boolean delete(Long id);
 				
-				public boolean delete(«ser.base.name» _«ser.base.name»);
+				boolean delete(«ser.base.name» _«ser.base.name»);
 				
 			«ENDIF»
 		«ENDFOR»
