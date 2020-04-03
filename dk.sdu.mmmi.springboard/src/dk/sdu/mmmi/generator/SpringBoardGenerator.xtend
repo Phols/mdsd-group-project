@@ -11,6 +11,7 @@ import dk.sdu.mmmi.springBoard.SpringBoard
 import dk.sdu.mmmi.springBoard.Package
 import javax.inject.Inject
 import dk.sdu.mmmi.springBoard.Model
+import java.util.ArrayList
 
 /**
  * Generates code from your model files on save.
@@ -20,11 +21,12 @@ import dk.sdu.mmmi.springBoard.Model
 class SpringBoardGenerator extends AbstractGenerator {
 
 	@Inject extension ServiceGenerator serviceGenerator
-	
 	@Inject extension ModelGenerator modelGenerator
+	@Inject extension RepositoryGenerator repositoryGenerator
 	
 	val mavenSrcStructure = "src/main/java/"
 	val mavenTestStructure = "src/test/java/"
+	ArrayList modelsWithSubClasses = new ArrayList<Model>();
 	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 //		fsa.generateFile('greetings.txt', 'People to greet: ' + 
@@ -38,11 +40,19 @@ class SpringBoardGenerator extends AbstractGenerator {
 		
 		
 		generateSpringProjectStructure(fsa, packName)
-		
+
+		for (Model individualModel : model.models.types.filter(Model)){
+			if(hasSubclasses(individualModel, model)){
+				modelsWithSubClasses.add(individualModel)
+			}
+		}
+
 		model.services.services.forEach[ element |
 			serviceGenerator.createService(fsa, packName, element)]
+      
 		model.models.types.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
+			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses)
 		]
 		
 	}
