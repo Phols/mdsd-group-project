@@ -9,7 +9,8 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 import dk.sdu.mmmi.springBoard.SpringBoard
 import dk.sdu.mmmi.springBoard.Package
-
+import javax.inject.Inject
+import dk.sdu.mmmi.springBoard.Model
 
 /**
  * Generates code from your model files on save.
@@ -17,7 +18,11 @@ import dk.sdu.mmmi.springBoard.Package
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#code-generation
  */
 class SpringBoardGenerator extends AbstractGenerator {
-
+	
+	@Inject extension ModelGenerator modelGenerator
+	
+	val mavenSrcStructure = "src/main/java/"
+	val mavenTestStructure = "src/test/java/"
 	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 //		fsa.generateFile('greetings.txt', 'People to greet: ' + 
@@ -29,7 +34,24 @@ class SpringBoardGenerator extends AbstractGenerator {
 		val model = resource.allContents.filter(SpringBoard).next
 		val packName = createPackageName(model.pkg)
 		
+		
 		generateSpringProjectStructure(fsa, packName)
+		
+		model.models.types.filter(Model).forEach[ element |
+			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
+		]
+		
+	}
+	
+	/**
+	 * Important to check for Spring Data API
+	 * https://blog.netgloo.com/2014/12/18/handling-entities-inheritance-with-spring-data-jpa/
+	 */
+	def hasSubclasses(Model element, SpringBoard model) {
+		for (Model m : model.models.types.filter(Model)) {
+			if (m.inh !== null && m.inh.base.name == element.name) return true
+		}
+		return false
 	}
 	
 	/**
@@ -37,12 +59,25 @@ class SpringBoardGenerator extends AbstractGenerator {
 	 */
 	def generateSpringProjectStructure(IFileSystemAccess2 fsa, String packName) {
 		fsa.generateFile("/pom.xml", generatePom(packName))
-		fsa.generateFile("src/main/java/"+packName.replace('.', '/')+"/DemoApplication.java", generateSource(packName))
-		fsa.generateFile("src/test/java/"+packName.replace('.', '/')+"/DemoApplicationTests.java", generateTest(packName))
+		fsa.generateFile(mavenSrcStructure+packName.replace('.', '/')+"/DemoApplication.java", generateSource(packName))
+		fsa.generateFile(mavenTestStructure+packName.replace('.', '/')+"/DemoApplicationTests.java", generateTest(packName))
 		fsa.generateFile("src/main/resources/application.properties", generateProperties())
 	}
 	
-	def CharSequence generateProperties()''' '''
+	/**
+	 * TODO: should probably be configurable instead of hardcoded database / 
+	 * OR: people should make this themselves
+	 */
+	def CharSequence generateProperties()'''
+	# H2
+	spring.datasource.url=jdbc:h2:mem:jpadb
+	spring.datasource.username=sa
+	spring.datasource.password=mypass
+	spring.datasource.driverClassName=org.h2.Driver
+	spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+	spring.jpa.generate-ddl=true
+	spring.jpa.hibernate.ddl-auto=create
+	'''
 	
 	def CharSequence generateTest(String packName)'''
 	package «packName»;
@@ -74,6 +109,9 @@ class SpringBoardGenerator extends AbstractGenerator {
 		}
 		return name
 	}
+	/**
+	 * TODO: perhaps include some way of configuring this?
+	 */
 	def CharSequence generatePom(String packName)'''
 	<?xml version="1.0" encoding="UTF-8"?>
 	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -85,19 +123,23 @@ class SpringBoardGenerator extends AbstractGenerator {
 	    <version>2.2.6.RELEASE</version>
 	    <relativePath/> <!-- lookup parent from repository -->
 	  </parent>
+	  
 	  <groupId>«packName»</groupId>
 	  <artifactId>demo</artifactId>
 	  <version>0.0.1-SNAPSHOT</version>
 	  <name>demo</name>
 	  <description>Demo project for Spring Boot</description>
+	  
 	  <properties>
 	    <java.version>11</java.version>
 	  </properties>
+	  
 	  <dependencies>
 	    <dependency>
 	      <groupId>org.springframework.boot</groupId>
 	      <artifactId>spring-boot-starter-web</artifactId>
 	    </dependency>
+	    
 	    <dependency>
 	      <groupId>org.springframework.boot</groupId>
 	      <artifactId>spring-boot-starter-test</artifactId>
@@ -108,6 +150,17 @@ class SpringBoardGenerator extends AbstractGenerator {
 	          <artifactId>junit-vintage-engine</artifactId>
 	        </exclusion>
 	      </exclusions>
+	    </dependency>
+	    
+	    <dependency>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-starter-data-jpa</artifactId>
+	    </dependency>
+	     
+	    <dependency>
+	        <groupId>com.h2database</groupId>
+	        <artifactId>h2</artifactId>
+	        <scope>runtime</scope> 
 	    </dependency>
 	  </dependencies>
 	  <build>
