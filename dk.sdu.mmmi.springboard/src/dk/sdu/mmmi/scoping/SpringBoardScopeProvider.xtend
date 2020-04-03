@@ -14,6 +14,12 @@ import java.util.HashSet
 import dk.sdu.mmmi.springBoard.Model
 import dk.sdu.mmmi.springBoard.SpringBoardPackage.Literals
 import dk.sdu.mmmi.springBoard.Exp
+import dk.sdu.mmmi.springBoard.Models
+import dk.sdu.mmmi.springBoard.Methods
+import dk.sdu.mmmi.springBoard.ListOf
+import dk.sdu.mmmi.springBoard.ModelType
+import dk.sdu.mmmi.springBoard.Type
+import java.util.Collections
 
 /**
  * This class contains custom scoping description.
@@ -22,22 +28,28 @@ import dk.sdu.mmmi.springBoard.Exp
  * on how and when to use it.
  */
 class SpringBoardScopeProvider extends AbstractSpringBoardScopeProvider {
-	
-	override IScope getScope(EObject context, EReference reference){
-		if(context instanceof Exp && reference==Literals.EXP__RIGHT) {
-			val seen = new HashSet<Model>
-			var model = EcoreUtil2.getContainerOfType(context,Model)
+
+	override IScope getScope(EObject context, EReference reference) {
+		if (context instanceof Exp && reference == Literals.EXP__RIGHT) {
+			var methods = EcoreUtil2.getContainerOfType(context, Methods);
 			val candidates = new ArrayList<Field>
-			while(model!==null) {
-				if(seen.contains(model)) return super.getScope(context, reference) // scope undefined
-				seen.add(model)
-				candidates.addAll(model.getFields.filter(Field))
-				model = model.inh.base
+
+			var type = methods.type;
+
+			if (type instanceof ListOf) {
+				type = (type as ListOf).type
+			}
+			if (type instanceof ModelType) {
+				var model = (type as ModelType)
+				candidates.addAll(model.base.getFields.filter(Field))
+				if (model.base.inh != null) {
+					candidates.addAll(model.base.inh.base.getFields.filter(Field))
+				}
+			} else {
+				return super.getScope(context, reference)
 			}
 			return Scopes.scopeFor(candidates)
 		}
 		return super.getScope(context, reference)
 	}
 }
-
-
