@@ -91,7 +91,6 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 				error("Subclasses must not have an ID field.", SpringBoardPackage.Literals.MODEL__FIELDS)
 			}
 		} else {
-			System.out.println(model.fields.filter[ f | f.type instanceof Identifier].size)
 			if (model.fields.filter[ f | f.type instanceof Identifier].size != 1) {
 				error("A model must have a single ID field.", SpringBoardPackage.Literals.MODEL__NAME)
 			}
