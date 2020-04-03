@@ -20,6 +20,7 @@ import dk.sdu.mmmi.springBoard.Model
 class SpringBoardGenerator extends AbstractGenerator {
 	
 	@Inject extension ModelGenerator modelGenerator
+	@Inject extension RepositoryGenerator repositoryGenerator
 	
 	val mavenSrcStructure = "src/main/java/"
 	val mavenTestStructure = "src/test/java/"
@@ -39,6 +40,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 		
 		model.models.types.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
+			repositoryGenerator.createRepository(element, fsa, packName, hasSubclasses(element, model))
 		]
 		
 	}
