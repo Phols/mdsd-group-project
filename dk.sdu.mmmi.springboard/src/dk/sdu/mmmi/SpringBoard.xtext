@@ -3,8 +3,7 @@ grammar dk.sdu.mmmi.SpringBoard with org.eclipse.xtext.common.Terminals
 generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
 
 SpringBoard:
-	'package' ':' pkg=Package models=Models services=Services
-		
+	'package' ':' pkg=Package models=Models services=Services	
 ;
 
 Package:
@@ -67,7 +66,7 @@ Res:
 	'[' exp=Exp ']'
 ;
 
-Exp:
+Exp: // Should be called Comparison
 	left=[Args] op=Operator right=[Field] (',' next=Exp)?
 ;
 
