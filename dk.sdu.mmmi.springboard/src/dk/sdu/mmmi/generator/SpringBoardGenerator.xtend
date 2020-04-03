@@ -94,7 +94,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	'''
 	
 	def CharSequence generateTest(String packName)'''
-	package Â«packNameÂ»;
+	package «packName»;
 	import org.junit.jupiter.api.Test;
 	import org.springframework.boot.test.context.SpringBootTest;
 	
@@ -138,7 +138,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	    <relativePath/> <!-- lookup parent from repository -->
 	  </parent>
 	  
-	  <groupId>Â«packNameÂ»</groupId>
+	  <groupId>«packName»</groupId>
 	  <artifactId>demo</artifactId>
 	  <version>0.0.1-SNAPSHOT</version>
 	  <name>demo</name>
@@ -189,7 +189,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	'''
 	
 	def CharSequence generateSource(String packName)'''
-	package Â«packNameÂ»;
+	package «packName»;
 	
 	import org.springframework.boot.SpringApplication;
 	import org.springframework.boot.autoconfigure.SpringBootApplication;
