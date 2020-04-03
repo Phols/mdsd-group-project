@@ -72,7 +72,7 @@ Exp:
 ;
 
 Input:
-	{Input} '(' args+=Args* ')'
+	{Input} '(' args=Args? ')'
 ;
 
 Args:

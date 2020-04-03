@@ -12,6 +12,7 @@ import dk.sdu.mmmi.springBoard.Lon
 import dk.sdu.mmmi.springBoard.Bool
 import dk.sdu.mmmi.springBoard.Identifier
 import dk.sdu.mmmi.springBoard.ModelType
+import dk.sdu.mmmi.springBoard.Args
 
 class ServiceGenerator {
 	
@@ -28,7 +29,7 @@ class ServiceGenerator {
 				«generateCrud(service)»
 			«ENDIF»
 			«FOR m:service.methods»
-				public «m.type.show» «m.name»(«FOR a:m.inp.args» «a.type.show» «a.name» «ENDFOR»);
+				public «m.type.show» «m.name»(«IF m.inp.args !== null» «m.inp.args.show» «ENDIF»);
 				 
 			«ENDFOR»
 		}
@@ -76,6 +77,8 @@ class ServiceGenerator {
 	def dispatch CharSequence show(Identifier id)'''Long'''
 	
 	def dispatch CharSequence show(ModelType m) '''«m.base.name»'''
+	
+	def dispatch CharSequence show(Args a)'''«a.type.show» «a.name» «IF a.next !== null», «a.next.show» «ENDIF»'''
 	
 	def createService(IFileSystemAccess2 fsa, String packageName, Service service) {
 		fsa.generateFile(mavenSrcStructure+packageName.replace('.', '/')+"/services/I"+service.base.name+'.java', generateService(packageName, service))
