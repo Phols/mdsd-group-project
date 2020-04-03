@@ -71,7 +71,7 @@ Exp: // Should be called Comparison
 ;
 
 Input:
-	{Input} '(' args+=Args* ')'
+	{Input} '(' args=Args? ')'
 ;
 
 Args:

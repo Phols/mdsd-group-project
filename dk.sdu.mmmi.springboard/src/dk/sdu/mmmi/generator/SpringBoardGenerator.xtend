@@ -18,6 +18,8 @@ import dk.sdu.mmmi.springBoard.Model
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#code-generation
  */
 class SpringBoardGenerator extends AbstractGenerator {
+
+	@Inject extension ServiceGenerator serviceGenerator
 	
 	@Inject extension ModelGenerator modelGenerator
 	
@@ -37,6 +39,8 @@ class SpringBoardGenerator extends AbstractGenerator {
 		
 		generateSpringProjectStructure(fsa, packName)
 		
+		model.services.services.forEach[ element |
+			serviceGenerator.createService(fsa, packName, element)]
 		model.models.types.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
 		]
