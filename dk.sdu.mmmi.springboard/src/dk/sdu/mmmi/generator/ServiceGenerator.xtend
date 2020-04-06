@@ -46,7 +46,7 @@ class ServiceGenerator {
 	def CharSequence generateCrudInterface(Service ser)'''
 		«FOR a:ser.crud.act»
 			«IF a == CRUDActions.C»
-				boolean create(«ser.base.name» _«ser.base.name»);
+				«ser.base.name» create(«ser.base.name» _«ser.base.name»);
 				
 			«ENDIF»
 			«IF a == CRUDActions.R»
@@ -56,20 +56,60 @@ class ServiceGenerator {
 				
 			«ENDIF»
 			«IF a == CRUDActions.U»
-				boolean update(Long id);
+				void update(Long id);
 				
-				boolean update(«ser.base.name» _«ser.base.name»);
+				void update(«ser.base.name» _«ser.base.name»);
 				
 			«ENDIF»
 			«IF a == CRUDActions.D»
-				boolean delete(Long id);
+				void delete(Long id);
 				
-				boolean delete(«ser.base.name» _«ser.base.name»);
+				void delete(«ser.base.name» _«ser.base.name»);
 				
 			«ENDIF»
 		«ENDFOR»
 	'''
 	
+	def CharSequence generateCrudImpl(Service ser) '''
+		«FOR a:ser.crud.act»
+			«IF a == CRUDActions.C»
+				public «ser.base.name» create(«ser.base.name» _«ser.base.name») {
+					return repository.save(_«ser.base.name»);
+				}
+				
+			«ENDIF»
+			«IF a == CRUDActions.R»
+				public List<«ser.base.name»> findAll(); {
+					List<«ser.base.name»> all = new ArrayList<>();
+					repository.findAll().forEach(all::add);
+					return all; 					
+				}
+				
+				public «ser.base.name» find(Long id) {
+					return repository.findByid(id);
+				}
+				
+			«ENDIF»
+			«IF a == CRUDActions.U»
+				
+				public «ser.base.name» update(«ser.base.name» _«ser.base.name») {
+					return repository.save(_«ser.base.name»);
+				}
+				
+			«ENDIF»
+			«IF a == CRUDActions.D»
+				public void delete(Long id) {
+					return repository.deleteById(id);
+				}
+				
+				boolean void(«ser.base.name» _«ser.base.name») {
+					return repository.delete(_«ser.base.name»);
+				}
+				
+			«ENDIF»
+		«ENDFOR»
+	'''
+	//Account for more return types?
 	def CharSequence generateMethodStubs(String packageName, Service service)'''
 		package «packageName».services.impl;
 		
@@ -87,6 +127,8 @@ class ServiceGenerator {
 				this.repository = repository;
 			}
 			
+			«generateCrudImpl(service)»
+			
 			«FOR m:service.methods.filter[m | m.res != null]»
 				@Override
 				public «m.type.show» «m.name» («IF m.inp.args !== null» «m.inp.args.show» «ENDIF») {
@@ -99,12 +141,21 @@ class ServiceGenerator {
 							_return.remove(temp);
 						}
 					}
+					
+					return _return;
+				«ELSEIF m.type instanceof Bool»
+					«service.base» temp  = repository.find().getValue();
+					return «comparisonFunction(m.res.comp)»
 				«ELSE»
+					«m.type.show» _return = repository.find().getValue();
+					«m.type.show» temp = _return;
 					if (!(«comparisonFunction(m.res.comp)»)) {
 						return null;
 					}
+					
+					return _return;	
 				«ENDIF»
-					return _return;				
+								
 				}
 			«ENDFOR»
 		}
@@ -117,7 +168,7 @@ class ServiceGenerator {
 			Dt: dtOperator(comp)
 			Identifier,
 			Str,
-			ListOf,
+			ListOf, //Rethink this one.
 			ModelType: objOperator(comp)
 			Bool: boolOperator(comp)
 			default: ''
