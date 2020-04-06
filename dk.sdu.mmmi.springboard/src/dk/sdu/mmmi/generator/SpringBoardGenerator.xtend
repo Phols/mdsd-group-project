@@ -51,7 +51,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 		model.models.types.filter(Model).forEach [ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
 			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses)
-			(model.services.services.forEach[serviceElement|System::out.println("Service is: " + serviceElement.base + "Element is: " + element.name ) if (serviceElement.base.name == element.name){
+			(model.services.services.forEach[serviceElement| if (serviceElement.base.name == element.name){
 				controllerGenerator.createController(element, serviceElement, fsa, packName, isASubClass(element))	
 			}
 				
