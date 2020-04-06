@@ -19,6 +19,7 @@ import dk.sdu.mmmi.springBoard.Lteq
 import dk.sdu.mmmi.springBoard.Eq
 import dk.sdu.mmmi.springBoard.Gteq
 import dk.sdu.mmmi.springBoard.Comp
+import dk.sdu.mmmi.springBoard.Model
 
 class ServiceGenerator {
 	
@@ -114,7 +115,7 @@ class ServiceGenerator {
 			«ENDIF»
 		«ENDFOR»
 	'''
-	//Account for more return types?
+	
 	def CharSequence generateMethodStubs(String packageName, Service service)'''
 		package «packageName».services.impl;
 		
@@ -149,10 +150,10 @@ class ServiceGenerator {
 					
 					return _return;
 				«ELSEIF m.type instanceof Bool»
-					«service.base» temp  = repository.find(«»).getValue();
+					«service.base.name» temp  = repository.find(«getTypeArgument(m.inp.args, service.base)»).getValue();
 					return «comparisonFunction(m.res.comp)»
 				«ELSE»
-					«m.type.show» _return = repository.find(«»).getValue();
+					«m.type.show» _return = repository.find(«getTypeArgument(m.inp.args, service.base)»).getValue();
 					«m.type.show» temp = _return;
 					if (!(«comparisonFunction(m.res.comp)»)) {
 						return null;
@@ -165,6 +166,14 @@ class ServiceGenerator {
 			«ENDFOR»
 		}
 	'''
+	// Get argument that matches a type.
+	def CharSequence getTypeArgument(Args a, Model t) {
+		if (a.type == t) {
+			return a.name
+		} else {
+			return getTypeArgument(a.next, t)
+		}
+	}
 	
 	def CharSequence comparisonFunction(Comp comp) {
 		switch comp.left.type {
