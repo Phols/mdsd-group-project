@@ -57,9 +57,8 @@ class ServiceGenerator {
 				
 			«ENDIF»
 			«IF a == CRUDActions.U»
-				void update(Long id);
-				
-				void update(«ser.base.name» _«ser.base.name»);
+
+				«ser.base.name» update(«ser.base.name» _«ser.base.name»);
 				
 			«ENDIF»
 			«IF a == CRUDActions.D»
