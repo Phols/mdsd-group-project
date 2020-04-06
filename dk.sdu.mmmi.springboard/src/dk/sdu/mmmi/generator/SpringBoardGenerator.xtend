@@ -28,7 +28,6 @@ class SpringBoardGenerator extends AbstractGenerator {
 	val mavenSrcStructure = "src/main/java/"
 	val mavenTestStructure = "src/test/java/"
 	ArrayList modelsWithSubClasses = new ArrayList<Model>();
-	ArrayList modelsWhoAreASubclass = new ArrayList<Model>();
 
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 //		fsa.generateFile('greetings.txt', 'People to greet: ' + 
@@ -52,7 +51,13 @@ class SpringBoardGenerator extends AbstractGenerator {
 		model.models.types.filter(Model).forEach [ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
 			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses)
-			controllerGenerator.createController(element, fsa, packName, isASubClass(element))
+			(model.services.services.forEach[serviceElement|System::out.println("Service is: " + serviceElement.base + "Element is: " + element.name ) if (serviceElement.base.name == element.name){
+				controllerGenerator.createController(element, serviceElement, fsa, packName, isASubClass(element))	
+			}
+				
+			])
+		
+	
 		]
 
 	}
