@@ -95,18 +95,79 @@ class ServiceGenerator {
 					«m.type.show» _return = new ArrayList<>();
 					_return = repository.findAll().forEach(_return::add);
 					for («service.base.name» temp : _return) {
-						if (!(«m.res.comp.show»)) {
-							return null;
+						if (!(«comparisonFunction(m.res.comp)»)) {
+							_return.remove(temp);
 						}
 					}
+				«ELSE»
+					if (!(«comparisonFunction(m.res.comp)»)) {
+						return null;
+					}
 				«ENDIF»
-				return _return;				
+					return _return;				
 				}
 			«ENDFOR»
 		}
 	'''
 	
-	def dispatch CharSequence show(Comp comp)'''«comp.left.type.comparison(comp.op, comp.right.type, comp.left.name, "temp.get"+comp.right.name.toFirstUpper+"()")»'''
+	def CharSequence comparisonFunction(Comp comp) {
+		switch comp.left.type {
+			Lon,
+			Int: numOperator(comp)
+			Dt: dtOperator(comp)
+			Identifier,
+			Str,
+			ListOf,
+			ModelType: objOperator(comp)
+			Bool: boolOperator(comp)
+			default: ''
+		}		
+	}
+	
+	def CharSequence objOperator(Comp comp) {
+		val right = 'temp.get'+comp.right.name.toFirstUpper+'())'
+		switch comp.op {
+			Lt,
+			Gt: '!'+comp.left.name+'.equals('+right
+			Eq: comp.left.name+'.equals('+right
+			Neq: '!'+comp.left.name+'.equals('+right
+			default: ''
+		}	
+	}
+	
+	def CharSequence boolOperator(Comp comp) {
+		val right = 'temp.get'+comp.right.name.toFirstUpper+'()'
+		switch comp.op {
+			Eq: comp.left.name+'=='+right
+			Neq: comp.left.name+'!='+right
+		}		
+	}
+	
+	def CharSequence dtOperator(Comp comp) {
+		val right = 'temp.get'+comp.right.name.toFirstUpper+'())'
+		switch comp.op {
+			Lt: comp.left.name+'.isBefore('+right
+			Gt: comp.left.name+'.isAfter('+right
+			Eq: comp.left.name+'.equals('+right
+			Gteq: comp.left.name+'.equals('+right +'||'+comp.left.name+'.isAfter('+right 
+			Lteq: comp.left.name+'.equals('+right +'||'+comp.left.name+'.isBefore('+right 
+			Neq: '!'+comp.left.name+'.equals('+right
+			default: ''
+		}	
+	}
+	
+	def CharSequence numOperator(Comp comp) {
+		val right = 'temp.get'+comp.right.name.toFirstUpper+'()'
+		switch comp.op {
+			Lt: comp.left.name+'<'+right
+			Gt: comp.left.name+'>'+right
+			Eq: comp.left.name+'=='+right
+			Gteq: comp.left.name+'>='+right
+			Lteq: comp.left.name+'<='+right
+			Neq: comp.left.name+'!='+right
+			default: ''
+		}
+	}
 	
 	def dispatch CharSequence show(Dt dt)'''LocalDateTime'''
 	
@@ -125,20 +186,6 @@ class ServiceGenerator {
 	def dispatch CharSequence show(ModelType m) '''«m.base.name»'''
 	
 	def dispatch CharSequence show(Args a)'''«a.type.show» «a.name» «IF a.next !== null», «a.next.show» «ENDIF»'''
-	
-	def dispatch CharSequence comparison(Dt a, Lt lt, Dt b, String l, String r)'''«l».isBefore(«r»)'''
-	
-	def dispatch CharSequence comparison(Dt a, Gt lt, Dt b, String l, String r)'''«l».isAfter(«r»)'''
-	
-	/*def dispatch CharSequence comparison(Dt a, Lteq lt, Dt b)'''.isBefore(«b») || «a».equals(«b»)'''
-	
-	def dispatch CharSequence comparison(Dt a, Gteq lt, Dt b)'''.isAfter(«b») || «a».equals(«b»)'''
-	
-	def dispatch CharSequence comparison(Dt a, Eq lt, Dt b)'''.equals()'''
-	
-	def dispatch CharSequence comparison(Dt a, Neq lt, Dt b)'''.equals()'''*/
-	
-	def dispatch CharSequence comparison(Lon l, Neq o ,Lon m, String le, String r)'''!= '''
 	
 	def createService(IFileSystemAccess2 fsa, String packageName, Service service) {
 		fsa.generateFile(mavenSrcStructure+packageName.replace('.', '/')+"/services/I"+service.base.name+'.java', generateService(packageName, service))
