@@ -83,20 +83,20 @@ class ServiceGenerator {
 				@Override
 				public List<«ser.base.name»> findAll() {
 					List<«ser.base.name»> all = new ArrayList<>();
-					repository.findAll().forEach(all::add);
+					repository.findAll().forEach(x -> all.add((«ser.base.name»)x));
 					return all; 					
 				}
 				
 				@Override
 				public «ser.base.name» find(Long id) {
-					return repository.findById(id).get();
+					return («ser.base.name»)repository.findById(id).get();
 				}
 				
 			«ENDIF»
 			«IF a == CRUDActions.U»
 				@Override
 				public «ser.base.name» update(«ser.base.name» _«ser.base.name») {
-					return repository.save((«ser.base.name»)_«ser.base.name»);
+					return («ser.base.name»)repository.save(_«ser.base.name»);
 				}
 				
 			«ENDIF»
@@ -107,7 +107,7 @@ class ServiceGenerator {
 				}
 				
 				@Override
-				boolean void(«ser.base.name» _«ser.base.name») {
+				boolean void delete(«ser.base.name» _«ser.base.name») {
 					repository.delete(_«ser.base.name»);
 				}
 				
