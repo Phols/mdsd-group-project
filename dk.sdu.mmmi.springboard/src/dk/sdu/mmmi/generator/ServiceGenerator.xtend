@@ -73,35 +73,40 @@ class ServiceGenerator {
 	def CharSequence generateCrudImpl(Service ser) '''
 		«FOR a:ser.crud.act»
 			«IF a == CRUDActions.C»
+				@Override
 				public «ser.base.name» create(«ser.base.name» _«ser.base.name») {
 					return repository.save(_«ser.base.name»);
 				}
 				
 			«ENDIF»
 			«IF a == CRUDActions.R»
-				public List<«ser.base.name»> findAll(); {
+				@Override
+				public List<«ser.base.name»> findAll() {
 					List<«ser.base.name»> all = new ArrayList<>();
 					repository.findAll().forEach(all::add);
 					return all; 					
 				}
 				
+				@Override
 				public «ser.base.name» find(Long id) {
 					return repository.findByid(id);
 				}
 				
 			«ENDIF»
 			«IF a == CRUDActions.U»
-				
+				@Override
 				public «ser.base.name» update(«ser.base.name» _«ser.base.name») {
 					return repository.save(_«ser.base.name»);
 				}
 				
 			«ENDIF»
 			«IF a == CRUDActions.D»
+				@Override
 				public void delete(Long id) {
 					return repository.deleteById(id);
 				}
 				
+				@Override
 				boolean void(«ser.base.name» _«ser.base.name») {
 					return repository.delete(_«ser.base.name»);
 				}
@@ -144,10 +149,10 @@ class ServiceGenerator {
 					
 					return _return;
 				«ELSEIF m.type instanceof Bool»
-					«service.base» temp  = repository.find().getValue();
+					«service.base» temp  = repository.find(«»).getValue();
 					return «comparisonFunction(m.res.comp)»
 				«ELSE»
-					«m.type.show» _return = repository.find().getValue();
+					«m.type.show» _return = repository.find(«»).getValue();
 					«m.type.show» temp = _return;
 					if (!(«comparisonFunction(m.res.comp)»)) {
 						return null;
@@ -168,7 +173,7 @@ class ServiceGenerator {
 			Dt: dtOperator(comp)
 			Identifier,
 			Str,
-			ListOf, //Rethink this one.
+			ListOf,
 			ModelType: objOperator(comp)
 			Bool: boolOperator(comp)
 			default: ''
