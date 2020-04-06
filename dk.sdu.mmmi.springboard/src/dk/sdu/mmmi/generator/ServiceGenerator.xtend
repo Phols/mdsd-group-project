@@ -90,7 +90,7 @@ class ServiceGenerator {
 				
 				@Override
 				public «ser.base.name» find(Long id) {
-					return repository.findByid(id);
+					return repository.findById(id);
 				}
 				
 			«ENDIF»

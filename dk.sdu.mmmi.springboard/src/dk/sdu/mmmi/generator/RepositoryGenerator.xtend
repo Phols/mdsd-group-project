@@ -19,16 +19,14 @@ class RepositoryGenerator {
 			package «packName».repositories;
 			
 			import «packName».models.«model.name»; 
-			import org.springframework.data.repository.Repository;
+			import org.springframework.data.repository.CrudRepository;
 			«IF modelsWithSubClasses.contains(model)»
 				import org.springframework.data.repository.NoRepositoryBean;
 				import java.util.Optional;
 				
 				@NoRepositoryBean 
 				public interface «model.name»BaseRepository<T extends «model.name»> 
-					extends Repository<T, String> {
-						
-						public Optional<T> findById(String id);
+					extends CrudRepository<T, String> {
 						 
 					}
 				«ENDIF»
@@ -40,9 +38,8 @@ class RepositoryGenerator {
 				«ENDIF»
 				
 				«IF model.inh == null && !modelsWithSubClasses.contains(model) »
-			public interface «model.name»Repository extends Repository<«model.name», String> {
-					
-				«model.name» find«model.name»ById(String id);	
+			public interface «model.name»Repository extends CrudRepository<«model.name», String> {
+
 			}
 				«ENDIF»
 				
