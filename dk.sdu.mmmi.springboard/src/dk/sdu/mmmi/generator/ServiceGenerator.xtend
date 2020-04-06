@@ -150,11 +150,20 @@ class ServiceGenerator {
 					
 					return _return;
 				«ELSEIF m.type instanceof Bool»
+					«IF getTypeArgument(m.inp.args, service.base) != null»
 					«service.base.name» temp  = repository.find(«getTypeArgument(m.inp.args, service.base)»).getValue();
+					«ELSE»
+					«service.base.name» temp = repository.findById(«getIdentifierArgument(m.inp.args)»).getValue();	
+					«ENDIF»
 					return «comparisonFunction(m.res.comp)»
 				«ELSE»
+					«IF getTypeArgument(m.inp.args, service.base) != null»
 					«m.type.show» _return = repository.find(«getTypeArgument(m.inp.args, service.base)»).getValue();
 					«m.type.show» temp = _return;
+					«ELSE»
+					«m.type.show» _return = repository.findById(«getIdentifierArgument(m.inp.args)»).getValue();
+					«m.type.show» temp = _return;	
+					«ENDIF»
 					if (!(«comparisonFunction(m.res.comp)»)) {
 						return null;
 					}
@@ -172,6 +181,14 @@ class ServiceGenerator {
 			return a.name
 		} else {
 			return getTypeArgument(a.next, t)
+		}
+	}
+	
+	def CharSequence getIdentifierArgument(Args a) {
+		if (a.type instanceof Identifier) {
+			return a.name
+		} else {
+			return getIdentifierArgument(a.next)
 		}
 	}
 	
