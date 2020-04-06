@@ -89,26 +89,26 @@ class ServiceGenerator {
 				
 				@Override
 				public «ser.base.name» find(Long id) {
-					return repository.findById(id);
+					return repository.findById(id).get();
 				}
 				
 			«ENDIF»
 			«IF a == CRUDActions.U»
 				@Override
 				public «ser.base.name» update(«ser.base.name» _«ser.base.name») {
-					return repository.save(_«ser.base.name»);
+					return repository.save((«ser.base.name»)_«ser.base.name»);
 				}
 				
 			«ENDIF»
 			«IF a == CRUDActions.D»
 				@Override
 				public void delete(Long id) {
-					return repository.deleteById(id);
+					repository.deleteById(id);
 				}
 				
 				@Override
 				boolean void(«ser.base.name» _«ser.base.name») {
-					return repository.delete(_«ser.base.name»);
+					repository.delete(_«ser.base.name»);
 				}
 				
 			«ENDIF»
@@ -140,7 +140,7 @@ class ServiceGenerator {
 				
 				«IF m.type instanceof ListOf»
 					«m.type.show» _return = new ArrayList<>();
-					_return = repository.findAll().forEach(_return::add);
+					repository.findAll().forEach(_return::add);
 					for («service.base.name» temp : _return) {
 						if (!(«comparisonFunction(m.res.comp)»)) {
 							_return.remove(temp);
@@ -150,17 +150,17 @@ class ServiceGenerator {
 					return _return;
 				«ELSEIF m.type instanceof Bool»
 					«IF getTypeArgument(m.inp.args, service.base) != null»
-					«service.base.name» temp  = repository.find(«getTypeArgument(m.inp.args, service.base)»).getValue();
+					«service.base.name» temp  = repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
 					«ELSE»
-					«service.base.name» temp = repository.findById(«getIdentifierArgument(m.inp.args)»).getValue();	
+					«service.base.name» temp = repository.findById(«getIdentifierArgument(m.inp.args)»).get();	
 					«ENDIF»
 					return «comparisonFunction(m.res.comp)»
 				«ELSE»
 					«IF getTypeArgument(m.inp.args, service.base) != null»
-					«m.type.show» _return = repository.find(«getTypeArgument(m.inp.args, service.base)»).getValue();
+					«m.type.show» _return = repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
 					«m.type.show» temp = _return;
 					«ELSE»
-					«m.type.show» _return = repository.findById(«getIdentifierArgument(m.inp.args)»).getValue();
+					«m.type.show» _return = repository.findById(«getIdentifierArgument(m.inp.args)»).get();
 					«m.type.show» temp = _return;	
 					«ENDIF»
 					if (!(«comparisonFunction(m.res.comp)»)) {
