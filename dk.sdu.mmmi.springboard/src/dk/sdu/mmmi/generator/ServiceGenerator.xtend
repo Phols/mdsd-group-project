@@ -75,7 +75,7 @@ class ServiceGenerator {
 			«IF a == CRUDActions.C»
 				@Override
 				public «ser.base.name» create(«ser.base.name» _«ser.base.name») {
-					return repository.save(_«ser.base.name»);
+					return («ser.base.name»)repository.save(_«ser.base.name»);
 				}
 				
 			«ENDIF»
@@ -107,7 +107,7 @@ class ServiceGenerator {
 				}
 				
 				@Override
-				boolean void delete(«ser.base.name» _«ser.base.name») {
+				public void delete(«ser.base.name» _«ser.base.name») {
 					repository.delete(_«ser.base.name»);
 				}
 				
