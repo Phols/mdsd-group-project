@@ -69,7 +69,7 @@ class ModelGenerator {
 	 * TODO: hardcoded length
 	 */
 	def CharSequence generateInvariant(Field f)'''
-	if (!(«f.name».«f.inv.prop»() «generateOperator(f.inv.op)» «f.inv.value»)) {
+	if (!(«f.name».«f.inv.prop»() «generateOperator(f.inv.op.toString())» «f.inv.value»)) {
 		throw new IllegalArgumentException("«f.inv.prop» of «f.name» must be «f.inv.op» «f.inv.value».");
 	}
 	'''

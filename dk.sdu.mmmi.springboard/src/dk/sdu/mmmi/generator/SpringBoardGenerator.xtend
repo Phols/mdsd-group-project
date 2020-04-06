@@ -46,9 +46,10 @@ class SpringBoardGenerator extends AbstractGenerator {
 			}
 		}
 
-		model.services.services.forEach[element|serviceGenerator.createService(fsa, packName, element)]
-
-		model.models.types.filter(Model).forEach [ element |
+		model.services.services.forEach[ element |
+			serviceGenerator.createService(fsa, packName, element); 
+			serviceGenerator.createAbstractService(fsa, packName, element)]
+		model.models.types.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
 			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses)
 			(model.services.services.forEach[serviceElement| if (serviceElement.base.name == element.name){
@@ -113,7 +114,7 @@ jpadb spring
 
 	def CharSequence generateTest(String packName) '''
 
-package «packName»;
+package Â«packNameÂ»;
 	import org.junit.jupiter.api.Test;
 	import org.springframework.boot.test.context.SpringBootTest;
 	
@@ -154,7 +155,7 @@ package «packName»;
 		    <relativePath/> <!-- lookup parent from repository -->
 		  </parent>
 		  
-		  <groupId>«packName»</groupId>
+		  <groupId>Â«packNameÂ»</groupId>
 		  <artifactId>demo</artifactId>
 		  <version>0.0.1-SNAPSHOT</version>
 		  <name>demo</name>
@@ -205,7 +206,7 @@ package «packName»;
 	'''
 
 	def CharSequence generateSource(String packName) '''
-		package «packName»;
+		package Â«packNameÂ»;
 		
 		import org.springframework.boot.SpringApplication;
 		import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -19,16 +19,14 @@ class RepositoryGenerator {
 			package «packName».repositories;
 			
 			import «packName».models.«model.name»; 
-			import org.springframework.data.repository.Repository;
+			import org.springframework.data.repository.CrudRepository;
 			«IF modelsWithSubClasses.contains(model)»
 				import org.springframework.data.repository.NoRepositoryBean;
 				import java.util.Optional;
 				
 				@NoRepositoryBean 
-				public interface «model.name»BaseRepository<T extends «model.name»> 
-					extends Repository<T, String> {
-						
-						public Optional<T> findById(String id);
+				public interface «model.name»Repository<T extends «model.name»> 
+					extends CrudRepository<T, Long> {
 						 
 					}
 				«ENDIF»
@@ -40,9 +38,8 @@ class RepositoryGenerator {
 				«ENDIF»
 				
 				«IF model.inh == null && !modelsWithSubClasses.contains(model) »
-			public interface «model.name»Repository extends Repository<«model.name», String> {
-					
-				«model.name» find«model.name»ById(String id);	
+			public interface «model.name»Repository extends CrudRepository<«model.name», Long> {
+
 			}
 				«ENDIF»
 				
@@ -57,15 +54,9 @@ class RepositoryGenerator {
 
 	def generateFile(Model model, IFileSystemAccess2 access2, String packName, ArrayList<Model> modelsWithSubClasses,
 		CharSequence contents) {
-		if (modelsWithSubClasses.contains(model)) {
-			access2.generateFile(
-				"src/main/java/" + packName.replace('.', '/') + "/repositories/" + model.name + "BaseRepository.java",
-				contents);
-		} else {
-			access2.generateFile(
-				"src/main/java/" + packName.replace('.', '/') + "/repositories/" + model.name + "Repository.java",
-				contents);
-		}
+		access2.generateFile(
+			"src/main/java/" + packName.replace('.', '/') + "/repositories/" + model.name + "Repository.java",
+			contents);
 	}
 
 }
