@@ -11,7 +11,6 @@ import dk.sdu.mmmi.springBoard.ModelType
 import dk.sdu.mmmi.springBoard.ListOf
 import dk.sdu.mmmi.springBoard.Identifier
 import dk.sdu.mmmi.springBoard.Field
-import dk.sdu.mmmi.springBoard.Operator
 import dk.sdu.mmmi.springBoard.Lt
 import dk.sdu.mmmi.springBoard.Neq
 import dk.sdu.mmmi.springBoard.Gteq
@@ -77,7 +76,7 @@ class ModelGenerator {
 	 */
 	def CharSequence generateInvariant(Field f)'''
 	if (!(«f.name».«f.inv.prop»() «generateOperator(f.inv.op)» «f.inv.value»)) {
-		throw new IllegalArgumentException("«f.inv.prop» of «f.name» must be «f.inv.op» «f.inv.value».");
+		throw new IllegalArgumentException("«f.inv.prop» of «f.name» must be «generateOperator(f.inv.op)» «f.inv.value».");
 	}
 	'''
 	

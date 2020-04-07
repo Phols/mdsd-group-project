@@ -34,7 +34,7 @@ class ServiceGenerator {
 		
 		public interface I«service.base.name» {
 			
-			«IF service.crud != null»
+			«IF service.crud !== null»
 				«generateCrudInterface(service)»
 			«ENDIF»
 			«FOR m:service.methods»
@@ -125,7 +125,6 @@ class ServiceGenerator {
 		import «packageName».services.*;
 		import org.springframework.stereotype.Service;
 		
-		@Service
 		public abstract class Abstract«service.base.name»Impl implements I«service.base.name» {
 			
 			protected «service.base.name»Repository repository;
@@ -136,7 +135,7 @@ class ServiceGenerator {
 			
 			«generateCrudImpl(service)»
 			
-			«FOR m:service.methods.filter[m | m.res != null]»
+			«FOR m:service.methods.filter[m | m.res !== null]»
 				@Override
 				public «m.type.show» «m.name» («IF m.inp.args !== null» «m.inp.args.show» «ENDIF») {
 				
@@ -151,14 +150,14 @@ class ServiceGenerator {
 					
 					return _return;
 				«ELSEIF m.type instanceof Bool»
-					«IF getTypeArgument(m.inp.args, service.base) != null»
+					«IF getTypeArgument(m.inp.args, service.base) !== null»
 					«service.base.name» temp  = repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
 					«ELSE»
 					«service.base.name» temp = repository.findById(«getIdentifierArgument(m.inp.args)»).get();	
 					«ENDIF»
 					return «comparisonFunction(m.res.comp)»
 				«ELSE»
-					«IF getTypeArgument(m.inp.args, service.base) != null»
+					«IF getTypeArgument(m.inp.args, service.base) !== null»
 					«m.type.show» _return = repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
 					«m.type.show» temp = _return;
 					«ELSE»

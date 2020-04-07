@@ -10,11 +10,14 @@ import dk.sdu.mmmi.springBoard.Bool
 import dk.sdu.mmmi.springBoard.ModelType
 import dk.sdu.mmmi.springBoard.ListOf
 import dk.sdu.mmmi.springBoard.Identifier
-import dk.sdu.mmmi.springBoard.Field
-import java.util.ArrayList
 import dk.sdu.mmmi.springBoard.Service
 import dk.sdu.mmmi.springBoard.CRUDActions
 import dk.sdu.mmmi.springBoard.Args
+import dk.sdu.mmmi.springBoard.Post
+import dk.sdu.mmmi.springBoard.Get
+import dk.sdu.mmmi.springBoard.Put
+import dk.sdu.mmmi.springBoard.Delete
+import dk.sdu.mmmi.springBoard.Local
 
 class ControllerGenerator {
 
@@ -23,25 +26,24 @@ class ControllerGenerator {
 	def CharSequence generateController(Model model, Service service, String packName, boolean isASubClass) {
 		'''
 package «packName».controllers;
-import «packName».models.«model.name»; 
+import «packName».models.*;
 import org.springframework.web.bind.annotation.*;
 import dk.sdu.mmmi.project.services.I«model.name»;
-«generateServiceImports(service, packName)»
 import javax.validation.Valid;
 import java.util.List;
 import java.time.LocalDateTime;
 
 @RestController
 public class «model.name»Controller {
+	
 	private I«model.name» «model.name.toFirstLower»Service;
 	
 	public «model.name»Controller(I«model.name» «model.name.toFirstLower»Service) {
-	        this.«model.name.toFirstLower»Service =  «model.name.toFirstLower»Service;
+	    this.«model.name.toFirstLower»Service =  «model.name.toFirstLower»Service;
 	}
 
 	«generateCRUDMethods(service, model)»
 	«generateServiceMethods(service, model)»
-
 }
 '''
 	}
@@ -55,44 +57,38 @@ public class «model.name»Controller {
 		}
 	}
 
-	def generateServiceImports(Service service, String packName) {
-		'''
-«««		«FOR m : service.methods»
-«««		«IF m.inp.args !== null»import «packName».models.«m.inp.args.showType»;«ENDIF»
-«««		«ENDFOR»
-		import «packName».models.*;
-		'''
-	}
-
 	def generateCRUDMethods(Service service, Model model) {
 		'''
 			«FOR a : service.crud.act»
 				«IF a == CRUDActions.C»
-					
 					@PostMapping("/api/«model.name.toLowerCase»")
 					public «model.name» create«model.name»(@Valid @RequestBody «model.name» «model.name.toFirstLower») {
 						return «model.name.toFirstLower»Service.create(«model.name.toFirstLower»);
-					}	
+					}
+					
 				«ENDIF»
 				«IF a == CRUDActions.R»
-					
 					@GetMapping("/api/«model.name.toLowerCase»/{id}")
-					public «model.name» find(Long id) {
+					public «model.name» find(@RequestParam Long id) {
 						return «model.name.toFirstLower»Service.find(id);
 					}
+					
+					@GetMapping("/api/«model.name.toLowerCase»/all")
+					public List<«model.name»> findAll() {
+						return «model.name.toFirstLower»Service.findAll();
+					}
+					
 				«ENDIF»
 				«IF a == CRUDActions.U»
-					
-					
-					@PostMapping("/api/«model.name.toLowerCase»/{id}")
+					@PutMapping("/api/«model.name.toLowerCase»")
 					@ResponseBody
 					public void update(@RequestBody «model.name» «model.name.toFirstLower») {
 						«model.name.toFirstLower»Service.update(«model.name.toFirstLower»);
 					}
+					
 				«ENDIF»
 				«IF a == CRUDActions.D»
-					
-					@PostMapping("/api/«model.name.toLowerCase»/{id}")
+					@DeleteMapping("/api/«model.name.toLowerCase»/{id}")
 					@ResponseBody
 					public void delete(@RequestParam Long id) {
 					    «model.name.toFirstLower»Service.delete(id);
@@ -103,17 +99,16 @@ public class «model.name»Controller {
 		'''
 	}
 
-	def generateServiceMethods(Service service, Model model) {
-		'''
-			«FOR m : service.methods»
-			
-			@GetMapping("/api/«model.name.toLowerCase»")
+	def generateServiceMethods(Service service, Model model)'''
+			«FOR m : service.methods.filter[m | !(m.req instanceof Local)]»
+			@«m.req.showReq»Mapping("/api/«model.name.toLowerCase»/«m.name.toLowerCase»")
 			«m.type.show» «m.name»(«IF m.inp.args !== null»«m.inp.args.show»«ENDIF»){
 				return 	«model.name.toFirstLower»Service.«m.name»(«IF m.inp.args !== null»«m.inp.args.showName»«ENDIF»);
 			}
-				«ENDFOR»
-		'''
-	}
+			
+			«ENDFOR»
+			'''
+	
 
 	def dispatch CharSequence show(Dt dt) '''LocalDateTime'''
 
@@ -135,5 +130,10 @@ public class «model.name»Controller {
 
 	def CharSequence showName(Args a) '''«a.name»'''
 	def CharSequence showType(Args a) '''«a.type.show»'''
+	
+	def dispatch CharSequence showReq(Post post)'''Post'''
+	def dispatch CharSequence showReq(Get get)'''Get'''
+	def dispatch CharSequence showReq(Put put)'''Put'''
+	def dispatch CharSequence showReq(Delete del)'''Delete'''
 
 }

@@ -37,7 +37,7 @@ class SpringBoardScopeProvider extends AbstractSpringBoardScopeProvider {
 			if (type instanceof ModelType) {
 				var model = (type as ModelType)
 				candidates.addAll(model.base.getFields.filter(Field))
-				if (model.base.inh != null) {
+				if (model.base.inh !== null) {
 					candidates.addAll(model.base.inh.base.getFields.filter(Field))
 				}
 			} else {

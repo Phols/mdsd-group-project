@@ -50,7 +50,7 @@ Service:
 	base=[Model] '{' crud=CRUD? methods+=Methods* '}'
 ;
 
-CRUD: // See metamodel later
+CRUD:
 	'[' act += CRUDActions* ']'
 ;
 
@@ -59,7 +59,11 @@ enum CRUDActions:
 ;
 
 Methods:
-	isLocal='local'? name=ID ':' type=Type inp=Input res=Res?
+	req=Request name=ID ':' type=Type inp=Input res=Res?
+;
+
+Request returns Request:
+	{Local} 'local' | {Post} 'POST' | {Get} 'GET' | {Put} 'PUT' | {Delete} 'DELETE'
 ;
 
 Res:
