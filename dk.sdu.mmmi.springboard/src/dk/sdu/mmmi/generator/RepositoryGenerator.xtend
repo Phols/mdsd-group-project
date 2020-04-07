@@ -16,14 +16,18 @@ class RepositoryGenerator {
 			import org.springframework.data.repository.NoRepositoryBean;
 			import java.util.Optional;
 			
-			@NoRepositoryBean 
+			@NoRepositoryBean
+			«IF model.inh !== null»
+			public interface «model.name»Repository<T extends «model.name»> 
+				extends «model.inh.base.name»Repository<«model.name»> {
+			}
+			«ELSE»
 			public interface «model.name»Repository<T extends «model.name»> 
 				extends CrudRepository<T, Long> {
-			
 			}
 			«ENDIF»
+			«ELSE»
 			«IF model.inh!==null»
-			
 			public interface «model.name»Repository extends «model.inh.base.name»Repository<«model.name»> {
 			
 			}
@@ -33,6 +37,7 @@ class RepositoryGenerator {
 			public interface «model.name»Repository extends CrudRepository<«model.name», Long> {
 
 			}
+			«ENDIF»
 			«ENDIF»
 		'''
 	}

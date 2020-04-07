@@ -28,7 +28,7 @@ class ControllerGenerator {
 package «packName».controllers;
 import «packName».models.*;
 import org.springframework.web.bind.annotation.*;
-import dk.sdu.mmmi.project.services.I«model.name»;
+import «packName».services.I«model.name»;
 import javax.validation.Valid;
 import java.util.List;
 import java.time.LocalDateTime;
@@ -41,20 +41,22 @@ public class «model.name»Controller {
 	public «model.name»Controller(I«model.name» «model.name.toFirstLower»Service) {
 	    this.«model.name.toFirstLower»Service =  «model.name.toFirstLower»Service;
 	}
-
+	
+	«IF service.crud !== null»
 	«generateCRUDMethods(service, model)»
+	«ENDIF»
 	«generateServiceMethods(service, model)»
 }
 '''
 	}
 
 	def createController(Model model, Service service, IFileSystemAccess2 fsa, String packName, boolean isASubClass) {
-		if (!isASubClass) {
+		//if (!isASubClass) {
 			fsa.generateFile(
 				mavenSrcStructure + packName.replace('.', '/') + "/controllers/" + model.name + "Controller.java",
 				generateController(model, service, packName, isASubClass)
 			)
-		}
+		//}
 	}
 
 	def generateCRUDMethods(Service service, Model model) {
@@ -69,7 +71,7 @@ public class «model.name»Controller {
 				«ENDIF»
 				«IF a == CRUDActions.R»
 					@GetMapping("/api/«model.name.toLowerCase»/{id}")
-					public «model.name» find(@RequestParam Long id) {
+					public «model.name» find(@PathVariable Long id) {
 						return «model.name.toFirstLower»Service.find(id);
 					}
 					
@@ -90,7 +92,7 @@ public class «model.name»Controller {
 				«IF a == CRUDActions.D»
 					@DeleteMapping("/api/«model.name.toLowerCase»/{id}")
 					@ResponseBody
-					public void delete(@RequestParam Long id) {
+					public void delete(@PathVariable Long id) {
 					    «model.name.toFirstLower»Service.delete(id);
 					}
 					
@@ -120,15 +122,15 @@ public class «model.name»Controller {
 
 	def dispatch CharSequence show(Lon l) '''Long'''
 
-	def dispatch CharSequence show(Bool b) '''boolean'''
+	def dispatch CharSequence show(Bool b) '''Boolean'''
 
 	def dispatch CharSequence show(Identifier id) '''Long'''
 
 	def dispatch CharSequence show(ModelType m) '''«m.base.name»'''
 
-	def dispatch CharSequence show(Args a) '''«a.type.show» «a.name»«IF a.next !== null», «a.next.show»«ENDIF»'''
+	def dispatch CharSequence show(Args a) '''@RequestParam «a.type.show» «a.name»«IF a.next !== null», «a.next.show»«ENDIF»'''
 
-	def CharSequence showName(Args a) '''«a.name»'''
+	def CharSequence showName(Args a) '''«a.name»«IF a.next!==null», «a.next.showName»«ENDIF»'''
 	def CharSequence showType(Args a) '''«a.type.show»'''
 	
 	def dispatch CharSequence showReq(Post post)'''Post'''

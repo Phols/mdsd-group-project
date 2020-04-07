@@ -20,6 +20,7 @@ import dk.sdu.mmmi.springBoard.Eq
 import dk.sdu.mmmi.springBoard.Gteq
 import dk.sdu.mmmi.springBoard.Comp
 import dk.sdu.mmmi.springBoard.Model
+import dk.sdu.mmmi.springBoard.Flt
 
 class ServiceGenerator {
 	
@@ -33,13 +34,12 @@ class ServiceGenerator {
 		import «packageName».models.*;
 		
 		public interface I«service.base.name» {
-			
 			«IF service.crud !== null»
-				«generateCrudInterface(service)»
+			«generateCrudInterface(service)»
 			«ENDIF»
 			«FOR m:service.methods»
-				«m.type.show» «m.name»(«IF m.inp.args !== null» «m.inp.args.show» «ENDIF»);
-				 
+			
+			«m.type.show» «m.name»(«IF m.inp.args !== null» «m.inp.args.show» «ENDIF»);
 			«ENDFOR»
 		}
 	'''
@@ -47,25 +47,24 @@ class ServiceGenerator {
 	def CharSequence generateCrudInterface(Service ser)'''
 		«FOR a:ser.crud.act»
 			«IF a == CRUDActions.C»
-				«ser.base.name» create(«ser.base.name» _«ser.base.name»);
-				
+			
+			«ser.base.name» create(«ser.base.name» _«ser.base.name»);
 			«ENDIF»
 			«IF a == CRUDActions.R»
-				List<«ser.base.name»> findAll();
-				
-				«ser.base.name» find(Long id);
-				
+			
+			List<«ser.base.name»> findAll();
+			
+			«ser.base.name» find(Long id);
 			«ENDIF»
 			«IF a == CRUDActions.U»
 
 				«ser.base.name» update(«ser.base.name» _«ser.base.name»);
-				
 			«ENDIF»
 			«IF a == CRUDActions.D»
-				void delete(Long id);
-				
-				void delete(«ser.base.name» _«ser.base.name»);
-				
+			
+			void delete(Long id);
+			
+			void delete(«ser.base.name» _«ser.base.name»);
 			«ENDIF»
 		«ENDFOR»
 	'''
@@ -73,13 +72,14 @@ class ServiceGenerator {
 	def CharSequence generateCrudImpl(Service ser) '''
 		«FOR a:ser.crud.act»
 			«IF a == CRUDActions.C»
-				@Override
-				public «ser.base.name» create(«ser.base.name» _«ser.base.name») {
-					return («ser.base.name»)repository.save(_«ser.base.name»);
-				}
-				
+			
+			@Override
+			public «ser.base.name» create(«ser.base.name» _«ser.base.name») {
+				return («ser.base.name»)repository.save(_«ser.base.name»);
+			}
 			«ENDIF»
 			«IF a == CRUDActions.R»
+				
 				@Override
 				public List<«ser.base.name»> findAll() {
 					List<«ser.base.name»> all = new ArrayList<>();
@@ -91,16 +91,16 @@ class ServiceGenerator {
 				public «ser.base.name» find(Long id) {
 					return («ser.base.name»)repository.findById(id).get();
 				}
-				
 			«ENDIF»
 			«IF a == CRUDActions.U»
+				
 				@Override
 				public «ser.base.name» update(«ser.base.name» _«ser.base.name») {
 					return («ser.base.name»)repository.save(_«ser.base.name»);
 				}
-				
 			«ENDIF»
 			«IF a == CRUDActions.D»
+				
 				@Override
 				public void delete(Long id) {
 					repository.deleteById(id);
@@ -110,7 +110,6 @@ class ServiceGenerator {
 				public void delete(«ser.base.name» _«ser.base.name») {
 					repository.delete(_«ser.base.name»);
 				}
-				
 			«ENDIF»
 		«ENDFOR»
 	'''
@@ -133,7 +132,9 @@ class ServiceGenerator {
 				this.repository = repository;
 			}
 			
+			«IF service.crud !== null»
 			«generateCrudImpl(service)»
+			«ENDIF»
 			
 			«FOR m:service.methods.filter[m | m.res !== null]»
 				@Override
@@ -151,17 +152,17 @@ class ServiceGenerator {
 					return _return;
 				«ELSEIF m.type instanceof Bool»
 					«IF getTypeArgument(m.inp.args, service.base) !== null»
-					«service.base.name» temp  = repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
+					«service.base.name» temp  = («service.base.name») repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
 					«ELSE»
-					«service.base.name» temp = repository.findById(«getIdentifierArgument(m.inp.args)»).get();	
+					«service.base.name» temp = («service.base.name») repository.findById(«getIdentifierArgument(m.inp.args)»).get();	
 					«ENDIF»
 					return «comparisonFunction(m.res.comp)»
 				«ELSE»
 					«IF getTypeArgument(m.inp.args, service.base) !== null»
-					«m.type.show» _return = repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
+					«m.type.show» _return = («service.base.name») repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
 					«m.type.show» temp = _return;
 					«ELSE»
-					«m.type.show» _return = repository.findById(«getIdentifierArgument(m.inp.args)»).get();
+					«m.type.show» _return = («service.base.name») repository.findById(«getIdentifierArgument(m.inp.args)»).get();
 					«m.type.show» temp = _return;	
 					«ENDIF»
 					if (!(«comparisonFunction(m.res.comp)»)) {
@@ -177,8 +178,11 @@ class ServiceGenerator {
 	'''
 	// Get argument that matches a type.
 	def CharSequence getTypeArgument(Args a, Model t) {
+		
 		if (a.type == t) {
 			return a.name
+		} else if (a.next === null) {
+			return null
 		} else {
 			return getTypeArgument(a.next, t)
 		}
@@ -195,6 +199,7 @@ class ServiceGenerator {
 	def CharSequence comparisonFunction(Comp comp) {
 		switch comp.left.type {
 			Lon,
+			Flt,
 			Int: numOperator(comp)
 			Dt: dtOperator(comp)
 			Identifier,
@@ -261,11 +266,13 @@ class ServiceGenerator {
 	
 	def dispatch CharSequence show(Lon l)'''Long'''
 	
-	def dispatch CharSequence show(Bool b)'''boolean'''
+	def dispatch CharSequence show(Bool b)'''Boolean'''
 	
 	def dispatch CharSequence show(Identifier id)'''Long'''
 	
 	def dispatch CharSequence show(ModelType m) '''«m.base.name»'''
+	
+	def dispatch CharSequence show(Flt m) '''Float'''
 	
 	def dispatch CharSequence show(Args a)'''«a.type.show» «a.name» «IF a.next !== null», «a.next.show» «ENDIF»'''
 	

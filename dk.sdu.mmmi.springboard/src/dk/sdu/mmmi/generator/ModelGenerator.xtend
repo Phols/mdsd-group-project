@@ -17,6 +17,7 @@ import dk.sdu.mmmi.springBoard.Gteq
 import dk.sdu.mmmi.springBoard.Lteq
 import dk.sdu.mmmi.springBoard.Eq
 import dk.sdu.mmmi.springBoard.Gt
+import dk.sdu.mmmi.springBoard.Flt
 
 class ModelGenerator {
 	
@@ -135,6 +136,10 @@ class ModelGenerator {
 	
 	def dispatch computeType(Lon type) {
 		"Long"
+	}
+	
+	def dispatch computeType(Flt type) {
+		"Float"
 	}
 	
 	/**
