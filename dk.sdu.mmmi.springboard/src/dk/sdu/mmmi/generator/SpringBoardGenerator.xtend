@@ -99,12 +99,8 @@ class SpringBoardGenerator extends AbstractGenerator {
 	 */
 	def CharSequence generateProperties() '''
 	# H2
-	spring.datasource.url=jdbc:
-
-h2:
-mem:
-jpadb spring
-.datasource.username=sa
+	spring.datasource.url=jdbc:h2:mem:jpadb 
+	spring.datasource.username=sa
 	spring.datasource.password=mypass
 	spring.datasource.driverClassName=org.h2.Driver
 	spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
@@ -113,8 +109,7 @@ jpadb spring
 	'''
 
 	def CharSequence generateTest(String packName) '''
-
-package «packName»;
+	package �packName�;
 	import org.junit.jupiter.api.Test;
 	import org.springframework.boot.test.context.SpringBootTest;
 	
@@ -126,7 +121,6 @@ package «packName»;
 	  }
 	  
 	}
-	
 	'''
 
 	def createPackageName(Package pack) {
@@ -155,7 +149,7 @@ package «packName»;
 		    <relativePath/> <!-- lookup parent from repository -->
 		  </parent>
 		  
-		  <groupId>«packName»</groupId>
+		  <groupId>�packName�</groupId>
 		  <artifactId>demo</artifactId>
 		  <version>0.0.1-SNAPSHOT</version>
 		  <name>demo</name>
@@ -206,7 +200,7 @@ package «packName»;
 	'''
 
 	def CharSequence generateSource(String packName) '''
-		package «packName»;
+		package �packName�;
 		
 		import org.springframework.boot.SpringApplication;
 		import org.springframework.boot.autoconfigure.SpringBootApplication;

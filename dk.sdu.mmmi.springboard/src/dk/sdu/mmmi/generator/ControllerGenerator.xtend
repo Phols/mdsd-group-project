@@ -29,6 +29,7 @@ import dk.sdu.mmmi.project.services.I«model.name»;
 «generateServiceImports(service, packName)»
 import javax.validation.Valid;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @RestController
 public class «model.name»Controller {
@@ -68,41 +69,35 @@ public class «model.name»Controller {
 			«FOR a : service.crud.act»
 				«IF a == CRUDActions.C»
 					
-						@PostMapping("/api/«model.name»")
-						public boolean create«model.name»(@Valid @RequestBody «model.name» «model.name.toFirstLower») {
-							return «model.name.toFirstLower»Service.create(«model.name.toFirstLower»);
-						}	
+					@PostMapping("/api/«model.name.toLowerCase»")
+					public «model.name» create«model.name»(@Valid @RequestBody «model.name» «model.name.toFirstLower») {
+						return «model.name.toFirstLower»Service.create(«model.name.toFirstLower»);
+					}	
 				«ENDIF»
 				«IF a == CRUDActions.R»
 					
-						@GetMapping("/api/«model.name»/{id}")
-						public «model.name» find(Long id) {
-							return «model.name.toFirstLower»Service.find(id);
-						}						
+					@GetMapping("/api/«model.name.toLowerCase»/{id}")
+					public «model.name» find(Long id) {
+						return «model.name.toFirstLower»Service.find(id);
+					}
 				«ENDIF»
 				«IF a == CRUDActions.U»
 					
-					    @PostMapping("/api/«model.name»/{id}")
-					    public boolean update(Long id) {
-					        return «model.name.toFirstLower»Service.update(id);
-					    }
-					    
-					    @PostMapping("/api/«model.name»/{id}")
-					    public boolean update(«model.name» «model.name.toFirstLower») {
-					    	return «model.name.toFirstLower»Service.update(«model.name.toFirstLower»);
-					    }						
+					
+					@PostMapping("/api/«model.name.toLowerCase»/{id}")
+					@ResponseBody
+					public void update(@RequestBody «model.name» «model.name.toFirstLower») {
+						«model.name.toFirstLower»Service.update(«model.name.toFirstLower»);
+					}
 				«ENDIF»
 				«IF a == CRUDActions.D»
 					
-					    @PostMapping("/api/«model.name»/{id}")
-					    public boolean delete(Long id) {
-					        return «model.name.toFirstLower»Service.delete(id);
-					    }
-					    
-					    @PostMapping("/api/«model.name»/{id}")
-					    public boolean delete(«model.name» «model.name.toFirstLower») {
-					    	return  «model.name.toFirstLower»Service.delete(«model.name.toFirstLower»);
-					    }   	
+					@PostMapping("/api/«model.name.toLowerCase»/{id}")
+					@ResponseBody
+					public void delete(@RequestParam Long id) {
+					    «model.name.toFirstLower»Service.delete(id);
+					}
+					
 				«ENDIF»
 			«ENDFOR»
 		'''
@@ -112,15 +107,15 @@ public class «model.name»Controller {
 		'''
 			«FOR m : service.methods»
 			
-				@GetMapping("/api/«model.name»")
-				«m.type.show» «m.name»(«IF m.inp.args !== null»«m.inp.args.show»«ENDIF»){
-					return 	«model.name.toFirstLower»Service.«m.name»(«IF m.inp.args !== null»«m.inp.args.showName»«ENDIF»);
-				};
+			@GetMapping("/api/«model.name.toLowerCase»")
+			«m.type.show» «m.name»(«IF m.inp.args !== null»«m.inp.args.show»«ENDIF»){
+				return 	«model.name.toFirstLower»Service.«m.name»(«IF m.inp.args !== null»«m.inp.args.showName»«ENDIF»);
+			}
 				«ENDFOR»
 		'''
 	}
 
-	def dispatch CharSequence show(Dt dt) '''DateTime'''
+	def dispatch CharSequence show(Dt dt) '''LocalDateTime'''
 
 	def dispatch CharSequence show(ListOf lo) '''List<«lo.type.show»>'''
 

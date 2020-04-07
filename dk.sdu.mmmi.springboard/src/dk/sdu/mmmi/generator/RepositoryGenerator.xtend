@@ -32,7 +32,7 @@ class RepositoryGenerator {
 				«ENDIF»
 				«IF model.inh!==null»
 				
-			public interface «model.name»Repository extends «model.inh.base.name»BaseRepository<«model.name»> {
+			public interface «model.name»Repository extends «model.inh.base.name»Repository<«model.name»> {
 				
 			}
 				«ENDIF»

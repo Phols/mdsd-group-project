@@ -123,7 +123,9 @@ class ServiceGenerator {
 		import «packageName».repositories.*;
 		import «packageName».models.*;
 		import «packageName».services.*;
+		import org.springframework.stereotype.Service;
 		
+		@Service
 		public abstract class Abstract«service.base.name»Impl implements I«service.base.name» {
 			
 			protected «service.base.name»Repository repository;
