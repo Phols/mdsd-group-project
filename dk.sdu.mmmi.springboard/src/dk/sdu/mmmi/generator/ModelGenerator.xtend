@@ -34,7 +34,8 @@ class ModelGenerator {
 	import «packName».models.*;
 	
 	@Entity
-	«IF hasSubclasses»@Inheritance«ENDIF»
+	@Table(name = "T_«model.name.toUpperCase»")
+	«IF hasSubclasses && model.inh === null»@Inheritance«ENDIF»
 	public class «model.name»«IF model.inh!==null» extends «model.inh.base.name»«ENDIF» {
 		
 		«FOR f:model.fields»
