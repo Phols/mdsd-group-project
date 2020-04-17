@@ -9,6 +9,15 @@ import java.util.regex.Pattern
 import dk.sdu.mmmi.springBoard.Model
 import dk.sdu.mmmi.springBoard.SpringBoardPackage
 import dk.sdu.mmmi.springBoard.Identifier
+import dk.sdu.mmmi.springBoard.Comp
+import dk.sdu.mmmi.springBoard.ModelType
+import dk.sdu.mmmi.springBoard.ListOf
+import dk.sdu.mmmi.springBoard.Bool
+import dk.sdu.mmmi.springBoard.Str
+import dk.sdu.mmmi.springBoard.Gt
+import dk.sdu.mmmi.springBoard.Lt
+import dk.sdu.mmmi.springBoard.Lteq
+import dk.sdu.mmmi.springBoard.Gteq
 
 /**
  * This class contains custom validation rules. 
@@ -16,17 +25,6 @@ import dk.sdu.mmmi.springBoard.Identifier
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 class SpringBoardValidator extends AbstractSpringBoardValidator {
-	
-//	public static val INVALID_NAME = 'invalidName'
-//
-//	@Check
-//	def checkGreetingStartsWithCapital(Greeting greeting) {
-//		if (!Character.isUpperCase(greeting.name.charAt(0))) {
-//			warning('Name should start with a capital', 
-//					SpringBoardPackage.Literals.GREETING__NAME,
-//					INVALID_NAME)
-//		}
-//	}
 
 	Pattern cPattern = Pattern.compile("([C]).*([C])")
 	Pattern rPattern = Pattern.compile("([R]).*([R])")
@@ -94,6 +92,27 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 			if (model.fields.filter[ f | f.type instanceof Identifier].size != 1) {
 				error("A model must have a single ID field.", SpringBoardPackage.Literals.MODEL__NAME)
 			}
+		}
+	}
+	
+	@Check
+	def checkComparisonOperator(Comp comp) {
+		if (comp.left.type.class !== comp.right.type.class) {
+			error("Type mismatch", comp, SpringBoardPackage.Literals.COMP__RIGHT)
+		}
+		switch comp.left.type {
+			ModelType,
+			ListOf,
+			Bool,
+			Str,
+			Identifier: switch comp.op {
+				Gt,
+				Lt,
+				Lteq,
+				Gteq: error("Invalid operator for this type", comp, SpringBoardPackage.Literals.COMP__OP)
+				default:''
+			}
+			default: ''
 		}
 	}
 }
