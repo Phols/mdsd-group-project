@@ -11,10 +11,10 @@ import java.util.ArrayList
 import org.eclipse.xtext.scoping.Scopes
 import dk.sdu.mmmi.springBoard.Field
 import dk.sdu.mmmi.springBoard.SpringBoardPackage.Literals
-import dk.sdu.mmmi.springBoard.Methods
 import dk.sdu.mmmi.springBoard.ListOf
 import dk.sdu.mmmi.springBoard.ModelType
 import dk.sdu.mmmi.springBoard.Comp
+import dk.sdu.mmmi.springBoard.Method
 
 /**
  * This class contains custom scoping description.
@@ -26,7 +26,7 @@ class SpringBoardScopeProvider extends AbstractSpringBoardScopeProvider {
 
 	override IScope getScope(EObject context, EReference reference) {
 		if (context instanceof Comp && reference == Literals.COMP__RIGHT) {
-			var methods = EcoreUtil2.getContainerOfType(context, Methods);
+			var methods = EcoreUtil2.getContainerOfType(context, Method);
 			val candidates = new ArrayList<Field>
 
 			var type = methods.type;
