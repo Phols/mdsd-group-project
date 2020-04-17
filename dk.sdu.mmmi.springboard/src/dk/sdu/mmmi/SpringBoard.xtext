@@ -71,7 +71,7 @@ Res:
 ;
 
 Comp:
-	left=[Args] op=Operator right=[Field] (',' next=Comp)?
+	left=[Args] op=Operator right=[Field]
 ;
 
 Input:
