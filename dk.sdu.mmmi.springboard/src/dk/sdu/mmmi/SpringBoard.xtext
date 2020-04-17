@@ -47,7 +47,7 @@ Services:
 ;
 
 Service:
-	base=[Model] '{' crud=CRUD? methods+=Methods* '}'
+	base=[Model] '{' crud=CRUD? methods+=Method* '}'
 ;
 
 CRUD:
@@ -58,7 +58,7 @@ enum CRUDActions:
 	C | R | U | D
 ;
 
-Methods:
+Method:
 	req=Request name=ID ':' type=Type inp=Input res=Res?
 ;
 
