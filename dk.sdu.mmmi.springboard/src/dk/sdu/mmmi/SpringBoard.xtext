@@ -59,7 +59,7 @@ enum CRUDActions:
 ;
 
 Method:
-	req=Request name=ID ':' type=Type inp=Input res=Res?
+	req=Request name=ID inp=Input ':' type=Type res=Res?
 ;
 
 Request returns Request:
@@ -67,7 +67,7 @@ Request returns Request:
 ;
 
 Res:
-	'[' comp=Comp']'
+	'{' comp=Comp'}'
 ;
 
 Comp:
