@@ -1,17 +1,27 @@
+/*
+ * Suggestions for individual portfolio.
+
+(0) Fix minor issues i.e. clumsy metamodel.
+
+(1) Remedy shortcomings: general requirements on models (any boolean condition similar to entity example﻿﻿﻿﻿), general boolean conditions﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿ on methods, fixing the issue of overwriting POM and properties files.
+
+(2) Minor extensions: connecting the data model to an existing database (perhaps mapping between the two data models?), separating data model and and service definitions.﻿﻿
+
+(3) Major extensions: the ability to define "abstract" spring boot projects i.e. with a partial data model and partial set of services, maybe even allowing different abstract projects to be combined?
+ 
+ 
+ */
+
 grammar dk.sdu.mmmi.SpringBoard with org.eclipse.xtext.common.Terminals
 
 generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
 
 SpringBoard:
-	'package' ':' pkg=Package models=Models services=Services	
+	'package' ':' pkg=Package 'models' ':' types+=Model+ 'services' ':' services+=Service+	
 ;
 
 Package:
 	name=ID ('.' next=Package)?
-;
-
-Models:
-	'models' ':' types+=Model+
 ;
 
 Model:
@@ -40,10 +50,6 @@ Type returns Type:
 
 Inherit:
 	'inherits' base=[Model]
-;
-
-Services:
-	'services' ':' services+=Service+
 ;
 
 Service:
