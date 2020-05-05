@@ -41,19 +41,19 @@ class SpringBoardGenerator extends AbstractGenerator {
 
 		generateSpringProjectStructure(fsa, packName)
 
-		for (Model individualModel : model.models.types.filter(Model)) {
+		for (Model individualModel : model.types.filter(Model)) {
 			if (hasSubclasses(individualModel, model)) {
 				modelsWithSubClasses.add(individualModel)
 			}
 		}
 
-		model.services.services.forEach[ element |
+		model.services.forEach[ element |
 			serviceGenerator.createService(fsa, packName, element); 
 			serviceGenerator.createAbstractService(fsa, packName, element)]
-		model.models.types.filter(Model).forEach[ element |
+		model.types.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
 			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses)
-			(model.services.services.forEach[serviceElement| if (serviceElement.base.name == element.name){
+			(model.services.forEach[serviceElement| if (serviceElement.base.name == element.name){
 				controllerGenerator.createController(element, serviceElement, fsa, packName, isASubClass(element))	
 			}
 				
@@ -76,7 +76,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	 * https://blog.netgloo.com/2014/12/18/handling-entities-inheritance-with-spring-data-jpa/
 	 */
 	def hasSubclasses(Model element, SpringBoard model) {
-		for (Model m : model.models.types.filter(Model)) {
+		for (Model m : model.types.filter(Model)) {
 			if(m.inh !== null && m.inh.base.name == element.name) return true
 		}
 		return false
