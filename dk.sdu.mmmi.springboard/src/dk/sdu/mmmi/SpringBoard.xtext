@@ -17,8 +17,9 @@ grammar dk.sdu.mmmi.SpringBoard with org.eclipse.xtext.common.Terminals
 generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
 
 SpringBoard:
-	'package' ':' pkg=Package 'models' ':' types+=Model+ 'services' ':' services+=Service+	
+	'package' ':' pkg=Package 'models' ':' types+=Model+ 'services' ':' services+=Service+ security=SECURITY?	
 ;
+
 
 Package:
 	name=ID ('.' next=Package)?
@@ -52,6 +53,32 @@ Inherit:
 	'inherits' base=[Model]
 ;
 
+
+SECURITY:
+	'security' ':' securities+=SECURITYOPTIONS*
+;
+
+SECURITYOPTIONS:
+	{SECURITYCONFIG} 'WebSecurityConfig' '{' option+=SECOPTION+ '}' | {ROLE} 'Role' '{' roles+=ROLE+ '}' | base=[Model]'-service' '{' requestRestrictions+=REQRESTRIC+ '}'
+;
+
+REQRESTRIC:
+	Request ':' to=[ROLE]
+;
+
+ROLE:
+	//name=ID (',' next=ROLE)?
+	name=ID	
+;
+
+SECOPTION:
+	{encoder}'encoder' ':' encode=ID | {protocol}'http' ':' http=ID | {ipaddress}'IPRange' ':' base=[Method] ':'IP
+;
+
+IP:
+	INT ('.' INT)*
+;
+
 Service:
 	base=[Model] '{' crud=CRUD? methods+=Method* '}'
 ;
@@ -73,7 +100,7 @@ Request returns Request:
 ;
 
 Res:
-	'{' comp=Comp'}'
+	 '{'condition+=Condition*'}'
 ;
 
 Comp:
@@ -88,3 +115,14 @@ Args:
 	name=ID ':' type=Type (',' next=Args)?
 ;
 
+boolLogic returns boolLogic:
+	Conjunction ({LogicOr.left=current} '||' right=boolLogic)?
+;
+
+Conjunction returns boolLogic:
+	Condition ({LogicAnd.left=current} '&&' right=Conjunction)?
+;
+
+ 
+ Condition:
+	comp=Comp |  '('bool=boolLogic')';
