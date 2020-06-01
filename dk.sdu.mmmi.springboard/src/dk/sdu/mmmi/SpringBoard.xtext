@@ -17,7 +17,7 @@ grammar dk.sdu.mmmi.SpringBoard with org.eclipse.xtext.common.Terminals
 generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
 
 SpringBoard:
-	'package' ':' pkg=Package 'models' ':' types+=Model+ 'services' ':' services+=Service+ security=SECURITY?	
+	'package' ':' pkg=Package 'models' ':' types+=Model+ 'services' ':' services+=Service+ security=Security?	
 ;
 
 
@@ -54,25 +54,24 @@ Inherit:
 ;
 
 
-SECURITY:
-	'security' ':' securities+=SECURITYOPTIONS*
+Security:
+	{Security} 'security' ':' securities+=SecurityOptions*
 ;
 
-SECURITYOPTIONS:
-	{SECURITYCONFIG} 'WebSecurityConfig' '{' option+=SECOPTION+ '}' | {ROLE} 'Role' '{' roles+=ROLE+ '}' | base=[Model]'-service' '{' requestRestrictions+=REQRESTRIC+ '}'
+SecurityOptions:
+	{SecurityConfig} 'WebSecurityConfig' '{' option+=SecOption+ '}' | {Role} 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=REQRESTRIC+ '}'
 ;
 
 REQRESTRIC:
-	Request ':' to=[ROLE]
+	Request ':' to=[Role]
 ;
 
-ROLE:
-	//name=ID (',' next=ROLE)?
+Role:
 	name=ID	
 ;
 
-SECOPTION:
-	{encoder}'encoder' ':' encode=ID | {protocol}'http' ':' http=ID | {ipaddress}'IPRange' ':' base=[Method] ':'IP
+SecOption:
+	{encoder}'encoder' ':' encode=ID | {protocol}'http' ':' http=ID | {ipaddress}'IPRange' ':' base=[Method] ':' IP | base=[Model]'-service'
 ;
 
 IP:
@@ -100,7 +99,8 @@ Request returns Request:
 ;
 
 Res:
-	 '{'condition+=Condition*'}'
+	 //'{'condition+=Condition*'}'
+	  '{'expression=BoolLogic'}'
 ;
 
 Comp:
@@ -115,14 +115,26 @@ Args:
 	name=ID ':' type=Type (',' next=Args)?
 ;
 
-boolLogic returns boolLogic:
-	Conjunction ({LogicOr.left=current} '||' right=boolLogic)?
+BoolLogic returns Logic:
+	left=Conjunction({LogicOr.left=current}'||' right=BoolLogic)?
 ;
 
-Conjunction returns boolLogic:
-	Condition ({LogicAnd.left=current} '&&' right=Conjunction)?
+Conjunction returns Logic:
+	left=Condition ({LogicAnd.left=current}'&&' right=Conjunction)?
 ;
+
+ Condition returns Proposition:
+ 	comp=Comp |  '('BoolLogic')'
+ ;
+
+//BoolLogic returns Proposition:
+//	Conjunction ({LogicOr.left=current} '||' right=Conjunction)*
+//;
+
+//Conjunction returns Proposition:
+//	Condition ({LogicAnd.left=current} '&&' right=Condition)*
+//;
 
  
- Condition:
-	comp=Comp |  '('bool=boolLogic')';
+ //Condition returns Proposition:
+//	comp=Comp |  '('bool=BoolLogic')';
