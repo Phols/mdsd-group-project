@@ -99,13 +99,32 @@ Request returns Request:
 ;
 
 Res:
-	 //'{'condition+=Condition*'}'
-	  '{'expression=BoolLogic'}'
+	  '{'expression=Logic'}'
 ;
 
-Comp:
-	left=[Args] op=Operator right=[Field]
-;
+//Comp:
+//	left=Exp op=Operator right=Exp
+//;
+//
+//Exp:
+//	left=Prim right=Prim
+//;
+//
+//Prim returns Exp:
+//	type=Type
+//;
+
+//Exp returns Expression:
+//	Factor ( ('+' {Add.left=current} | '-' {Sub.left=current}) right=Factor)*
+//;
+//
+//Factor returns Expression:
+//	Primitive ( ('*' {Mul.left=current} | '/' {Div.left=current}) right=Primitive)*
+//;
+//
+//Primitive returns Expression:
+//	Name | IntExp | '(' Exp ')' | Sum | SizeOf
+//;
 
 Input:
 	{Input} '(' args=Args? ')'
@@ -115,26 +134,31 @@ Args:
 	name=ID ':' type=Type (',' next=Args)?
 ;
 
-BoolLogic returns Logic:
-	left=Conjunction({LogicOr.left=current}'||' right=BoolLogic)?
+Comp:
+	left=[Args] op=Operator right=[Field]	
 ;
 
-Conjunction returns Logic:
-	left=Condition ({LogicAnd.left=current}'&&' right=Conjunction)?
+//Comp:
+//	left=[Args] op=Operator right=[Field]
+//;
+
+//Logic returns Logic:
+//	left=Conjunction({LogicOr.left=current}'||' right=Logic)?
+//;
+//
+//Conjunction returns Logic:
+//	left=PrimitiveOp ({LogicAnd.left=current}'&&' right=Conjunction)?
+//;
+
+Logic returns Proposition:
+	left=Conjunction({LogicOr.left=current}'||' right=Logic)?
 ;
 
- Condition returns Proposition:
- 	comp=Comp |  '('BoolLogic')'
+Conjunction returns Proposition:
+	left=PrimitiveOp ({LogicAnd.left=current}'&&' right=Conjunction)?
+;
+
+PrimitiveOp returns Proposition:
+ 	comp=Comp |  '('Logic')'
  ;
 
-//BoolLogic returns Proposition:
-//	Conjunction ({LogicOr.left=current} '||' right=Conjunction)*
-//;
-
-//Conjunction returns Proposition:
-//	Condition ({LogicAnd.left=current} '&&' right=Condition)*
-//;
-
- 
- //Condition returns Proposition:
-//	comp=Comp |  '('bool=BoolLogic')';

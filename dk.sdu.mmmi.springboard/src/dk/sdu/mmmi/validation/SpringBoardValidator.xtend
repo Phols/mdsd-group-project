@@ -9,7 +9,6 @@ import java.util.regex.Pattern
 import dk.sdu.mmmi.springBoard.Model
 import dk.sdu.mmmi.springBoard.SpringBoardPackage
 import dk.sdu.mmmi.springBoard.Identifier
-import dk.sdu.mmmi.springBoard.Comp
 import dk.sdu.mmmi.springBoard.ModelType
 import dk.sdu.mmmi.springBoard.ListOf
 import dk.sdu.mmmi.springBoard.Bool
@@ -18,6 +17,7 @@ import dk.sdu.mmmi.springBoard.Gt
 import dk.sdu.mmmi.springBoard.Lt
 import dk.sdu.mmmi.springBoard.Lteq
 import dk.sdu.mmmi.springBoard.Gteq
+import dk.sdu.mmmi.springBoard.Comp
 
 /**
  * This class contains custom validation rules. 

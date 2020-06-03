@@ -18,13 +18,12 @@ import dk.sdu.mmmi.springBoard.Gt
 import dk.sdu.mmmi.springBoard.Lteq
 import dk.sdu.mmmi.springBoard.Eq
 import dk.sdu.mmmi.springBoard.Gteq
-import dk.sdu.mmmi.springBoard.Comp
 import dk.sdu.mmmi.springBoard.Model
 import dk.sdu.mmmi.springBoard.Flt
-import dk.sdu.mmmi.springBoard.LogicOr
-import dk.sdu.mmmi.springBoard.LogicAnd
-import dk.sdu.mmmi.springBoard.Proposition
 import dk.sdu.mmmi.springBoard.Method
+import dk.sdu.mmmi.springBoard.LogicAnd
+import dk.sdu.mmmi.springBoard.LogicOr
+import dk.sdu.mmmi.springBoard.Comp
 
 class ServiceGenerator {
 	
@@ -68,7 +67,7 @@ class ServiceGenerator {
 			
 			void delete(Long id);
 			
-			void delete(«ser.base.name» «ser.base.name»);
+			void delete(«ser.base.name» _«ser.base.name»);
 			«ENDIF»
 		«ENDFOR»
 	'''
@@ -143,51 +142,22 @@ class ServiceGenerator {
 			«FOR m:service.methods.filter[m | m.res !== null]»
 				@Override
 				public «m.type.show» «m.name» («IF m.inp.args !== null»«m.inp.args.show» «ENDIF») {
-				«IF m.res.expression.left.left.comp !== null»
-					«IF m.type instanceof ListOf»
-					«m.type.show» _return = new ArrayList<>();
-					repository.findAll().forEach(_return::add);
-					for («service.base.name» temp : _return) {
-						if (!(«comparisonFunction(m.res.expression.left.left.comp)»)) {
-							_return.remove(temp);
-						}
-					}
-					
-					return _return;
-				«ELSEIF m.type instanceof Bool»
-					«IF getTypeArgument(m.inp.args, service.base) !== null»
-					«service.base.name» temp  = («service.base.name») repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
-					«ELSE»
-					«service.base.name» temp = («service.base.name») repository.findById(«getIdentifierArgument(m.inp.args)»).get();	
-					«ENDIF»
-					return «comparisonFunction(m.res.expression.left.left.comp)»
-				«ELSE»
-					«IF getTypeArgument(m.inp.args, service.base) !== null»
-					«m.type.show» _return = («service.base.name») repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
-					«m.type.show» temp = _return;
-					«ELSE»
-					«m.type.show» _return = («service.base.name») repository.findById(«getIdentifierArgument(m.inp.args)»).get();
-					«m.type.show» temp = _return;	
-					«ENDIF»
-					if (!(«comparisonFunction(m.res.expression.left.left.comp)»)) {
-						return null;
-					}
-					
-					return _return;	
-					«ENDIF»
-				«ENDIF»								
+				«handleExpression(m, service)»
 				}
 			«ENDFOR»
 		}
 	'''
 	def handleExpression(Method m, Service service){
-		if(m.res.expression.comp !==null){
+		if(m.res.expression !== null){
+		//	m.res.expression.generateLogic
+	}
+		if(m.res.expression.left.left.comp !==null){
 		'''
 		«IF m.type instanceof ListOf»
 							«m.type.show» _return = new ArrayList<>();
 							repository.findAll().forEach(_return::add);
 							for («service.base.name» temp : _return) {
-								if (!(«comparisonFunction(m.res.expression.comp)»)) {
+								if (!(«comparisonFunction(m.res.expression.left.left.comp)»)) {
 									_return.remove(temp);
 								}
 							}
@@ -199,7 +169,7 @@ class ServiceGenerator {
 							«ELSE»
 							«service.base.name» temp = («service.base.name») repository.findById(«getIdentifierArgument(m.inp.args)»).get();	
 							«ENDIF»
-							return «comparisonFunction(m.res.expression.comp)»
+							return «comparisonFunction(m.res.expression.left.left.comp)»
 						«ELSE»
 							«IF getTypeArgument(m.inp.args, service.base) !== null»
 							«m.type.show» _return = («service.base.name») repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
@@ -208,26 +178,40 @@ class ServiceGenerator {
 							«m.type.show» _return = («service.base.name») repository.findById(«getIdentifierArgument(m.inp.args)»).get();
 							«m.type.show» temp = _return;	
 							«ENDIF»
-							if (!(«comparisonFunction(m.res.expression.comp)»)) {
+							if (!(«comparisonFunction(m.res.expression.left.left.comp)»)) {
 								return null;
 							}
 							
 							return _return;	
-							«ENDIF»
+						«ENDIF»
 		'''
 		
 		}
 		
 	}
-	//def dispatch generateLogic(LogicOr logic){
-	//'''«logic.left»'''
-	//}
 	
-	//def dispatch generateLogic(LogicAnd logic){
-	//	
-	//}
+//	def dispatch CharSequence generateLogic(Args logic) ''''''
+//	def dispatch CharSequence generateLogic(Operator logic)''''''
+//	
+//	
+//	def dispatch CharSequence generateLogic(Field logic)''' '''   
 	
-	// Get argument that matches a type.
+	
+
+	def dispatch CharSequence generateLogic(LogicAnd logic) '''(«logic.left.generateLogic»&&«logic.right.generateLogic»)'''
+	def dispatch CharSequence generateLogic(LogicOr logic) '''(«logic.left.generateLogic»||«logic.right.generateLogic»)'''
+	//def dispatch CharSequence generateLogic(Comp logic){comparisonFunction(logic)}
+	
+	def dispatch CharSequence generateLogic(Comp logic)
+	'''«IF logic !== null»
+	(«logic» test «logic»)
+		«ENDIF»
+		null
+	'''
+	
+	
+	//def dispatch CharSequence generateLogic(Comp logic){(«logic.left.Args» «logic.op» «logic.right.Field»)}
+	
 	def CharSequence getTypeArgument(Args a, Model t) {
 		
 		if (a.type == t) {
