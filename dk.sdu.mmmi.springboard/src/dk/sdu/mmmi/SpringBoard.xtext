@@ -59,10 +59,10 @@ Security:
 ;
 
 SecurityOptions:
-	{SecurityConfig} 'WebSecurityConfig' '{' option+=SecOption+ '}' | {Role} 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=REQRESTRIC+ '}'
+	'WebSecurityConfig' '{' option+=SecOption+ '}' | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=ReqRestriction+ '}'
 ;
 
-REQRESTRIC:
+ReqRestriction:
 	Request ':' to=[Role]
 ;
 
@@ -70,8 +70,9 @@ Role:
 	name=ID	
 ;
 
-SecOption:
-	{encoder}'encoder' ':' encode=ID | {protocol}'http' ':' http=ID | {ipaddress}'IPRange' ':' base=[Method] ':' IP | base=[Model]'-service'
+// Returns secOption to be able to reference SecOption in xtext
+SecOption returns SecOption:
+	{Encoder}'encoder' ':' encode=ID | {Protocol}'http' ':' http=ID | {Ipaddress}'IPRange' ':' base=[Method] ':' IP | {DetailService} base=[Model]'-service'
 ;
 
 IP:
