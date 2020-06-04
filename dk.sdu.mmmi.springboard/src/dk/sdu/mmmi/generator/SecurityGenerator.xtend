@@ -24,7 +24,7 @@ class SecurityGenerator {
 	import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 	import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 	«EncodeImports(security)»
-
+	
 	@Configuration
 	@EnableWebSecurity
 	public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -86,7 +86,7 @@ class SecurityGenerator {
 						«FOR option: sec.option.filter(option | option instanceof SecOption)»
 						«IF option instanceof DetailService»
 						«generateDetailServiceImpl(fsa, packname, option)»
-						«generatePrincipal(fsa, packname, option)»
+						«generatePrincipal(fsa, packname, option, security)»
 						private «option.base.name»DetailServiceImpl detailService;
 						
 						public WebSecurityConfig(«option.base.name»DetailServiceImpl detailService){
@@ -107,16 +107,15 @@ class SecurityGenerator {
 				«IF option instanceof Encoder»
 				import org.springframework.security.crypto.password.PasswordEncoder;
 					«IF option.encode.toLowerCase.equals("bcrypt")»
-					import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+				import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 					«ELSEIF option.encode.toLowerCase.equals("scrypt")»
-					import org.springframework.security.crypto.scrypt;
+				import org.springframework.security.crypto.scrypt;
 					«ELSEIF option.encode.toLowerCase.equals("abstract")»
-					import org.springframework.security.crypto.password.AbstractPasswordEncoder;
+				import org.springframework.security.crypto.password.AbstractPasswordEncoder;
 					«ELSEIF option.encode.toLowerCase.equals("pbkdf2")»
-					import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;			
+				import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;			
 					«ENDIF»
 				«ENDIF»
-				
 				«ENDFOR»
 			«ENDFOR»
 		'''
@@ -156,7 +155,7 @@ class SecurityGenerator {
 		'''
 	}
 	
-	def CharSequence generatePrincipalFile(IFileSystemAccess2 fsa, String packageName, DetailService service){
+	def CharSequence generatePrincipalFile(IFileSystemAccess2 fsa, String packageName, DetailService service, Security security){
 		'''
 		package «packageName».security;
 		
@@ -177,10 +176,7 @@ class SecurityGenerator {
 		      public Collection<? extends GrantedAuthority> getAuthorities() {
 		          String rolePrefix = "ROLE_";
 		          List<GrantedAuthority> authorities = new ArrayList<>();
-«««		          for (Role role :
-«««		                  userAccount.getRoles()) {
-«««		              authorities.add(new SimpleGrantedAuthority(rolePrefix + role.name()));
-«««		          }
+		          «generateAuthorityRoles(security)»
 		          return authorities;
 		      }
 			
@@ -221,6 +217,16 @@ class SecurityGenerator {
 		'''
 	}
 	
+	def CharSequence generateAuthorityRoles(Security security) {
+		'''		
+		«FOR securityOption: security.securities.filter(securities| securities.roles !== null)»
+			«FOR roles : securityOption.roles.filter(role | role.name !== null)»
+				authorities.add(new SimpleGrantedAuthority(rolePrefix + "«roles.name.toUpperCase()»"));
+			«ENDFOR»
+		«ENDFOR»
+		'''
+	}
+	
 	def generateDetailServiceImpl(IFileSystemAccess2 fsa, String packName, DetailService service) {
 		fsa.generateFile(
 			mavenSrcStructure + packName.replace('.', '/') + "/security/"+service.base.name+"DetailServiceImpl"+".java",
@@ -228,10 +234,10 @@ class SecurityGenerator {
 		)
 	}
 	
-	def generatePrincipal(IFileSystemAccess2 fsa, String packName, DetailService service){
+	def generatePrincipal(IFileSystemAccess2 fsa, String packName, DetailService service, Security security){
 		fsa.generateFile(
 			mavenSrcStructure + packName.replace('.', '/') + "/security/"+service.base.name+"Principal"+".java",
-				generatePrincipalFile(fsa, packName, service)
+				generatePrincipalFile(fsa, packName, service, security)
 		)
 	}
 	
