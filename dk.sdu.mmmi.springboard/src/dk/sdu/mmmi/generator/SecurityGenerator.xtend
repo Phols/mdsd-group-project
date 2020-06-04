@@ -55,33 +55,33 @@ class SecurityGenerator {
 	
 	def CharSequence PasswordEncoder(Security security) {
 		'''
-		«FOR sec:security.securities.filter(sec | sec.option !== null && sec.option.size != 0)»
-						«FOR option: sec.option.filter(option | option instanceof SecOption)»
-						«IF option instanceof Encoder»
+		«IF security !== null»
+			«FOR sec:security.securities.filter(sec | sec.option !== null && sec.option.size != 0)»
+				«FOR option: sec.option.filter(option | option instanceof SecOption)»
+					«IF option instanceof Encoder»
 						@Bean
 						public PasswordEncoder passwordEncoder() {
 							return new 
-					«IF option instanceof Encoder»
 						«IF option.encode.toLowerCase.equals("bcrypt")»
 								BCryptPasswordEncoder();
-							«ELSEIF option.encode.toLowerCase.equals("scrypt")»
+						«ELSEIF option.encode.toLowerCase.equals("scrypt")»
 								SCryptPasswordEncoder();
-							«ELSEIF option.encode.toLowerCase.equals("pbkdf2")»
+						«ELSEIF option.encode.toLowerCase.equals("pbkdf2")»
 								Pbkdf2PasswordEncoder();
 «««	Probably Fix			«ELSEIF option.encode.toLowerCase.equals("abstract")» 
 «««							«option.encode»PasswordEncoder
 						«ENDIF»
 					«ENDIF»
 						} 
-						
-						«ENDIF»
-						«ENDFOR»
-					«ENDFOR»
+				«ENDFOR»
+			«ENDFOR»
+		«ENDIF»
 		'''
 	}
 	
 	def DetailService(Security security, IFileSystemAccess2 fsa, String packname) {
 		'''
+		«IF security !==null»
 		«FOR sec:security.securities.filter(sec | sec.option !== null && sec.option.size != 0)»
 						«FOR option: sec.option.filter(option | option instanceof SecOption)»
 						«IF option instanceof DetailService»
@@ -94,7 +94,8 @@ class SecurityGenerator {
 						}
 						«ENDIF»
 						«ENDFOR»
-					«ENDFOR»
+		«ENDFOR»
+		«ENDIF»
 		'''
 		
 	}
@@ -102,7 +103,8 @@ class SecurityGenerator {
 	
 	def CharSequence EncodeImports(Security security) {
 		'''
-		«FOR sec:security.securities.filter(sec | sec.option !== null && sec.option.size != 0)»
+		«IF security !== null»
+		«FOR sec:security.securities.filter(sec | sec.option !== null  && sec.option.size != 0)»
 				«FOR option: sec.option.filter(option | option instanceof SecOption)»
 				«IF option instanceof Encoder»
 				import org.springframework.security.crypto.password.PasswordEncoder;
@@ -117,7 +119,8 @@ class SecurityGenerator {
 					«ENDIF»
 				«ENDIF»
 				«ENDFOR»
-			«ENDFOR»
+		«ENDFOR»
+		«ENDIF»
 		'''
 	}
 	
