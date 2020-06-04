@@ -13,6 +13,9 @@ import javax.inject.Inject
 import dk.sdu.mmmi.springBoard.Model
 import java.util.ArrayList
 import java.util.List
+import dk.sdu.mmmi.springBoard.DetailService
+import dk.sdu.mmmi.springBoard.Security
+import dk.sdu.mmmi.springBoard.SecOption
 
 /**
  * Generates code from your model files on save.
@@ -31,11 +34,16 @@ class SpringBoardGenerator extends AbstractGenerator {
 	val mavenTestStructure = "src/test/java/"
 	List<Model> modelsWithSubClasses = new ArrayList<Model>();
 	boolean securityChosen = false;
+	DetailService detailService = null;
 	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 		val model = resource.allContents.filter(SpringBoard).next
 		val packName = createPackageName(model.pkg)
-
+		
+		if(model.security !== null){
+			securityChosen = true;
+			detailService = findDetailService(model.security);	
+		}
 		generateSpringProjectStructure(fsa, packName)
 
 		for (Model individualModel : model.types.filter(Model)) {
@@ -43,14 +51,12 @@ class SpringBoardGenerator extends AbstractGenerator {
 				modelsWithSubClasses.add(individualModel)
 			}
 		}
-		if(model.security !== null){
-			securityChosen = true;	
-		}
+
 		model.services.forEach[ element |
 			serviceGenerator.createService(fsa, packName, element); 
 			serviceGenerator.createAbstractService(fsa, packName, element)]
 		model.types.filter(Model).forEach[ element |
-			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
+			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model), securityChosen, detailService)
 			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses, securityChosen)
 			(model.services.forEach[serviceElement| if (serviceElement.base.name == element.name){
 				controllerGenerator.createController(element, serviceElement, fsa, packName, isASubClass(element))	
@@ -60,7 +66,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 		
 	
 		]
-		securityGenerator.generateSecurityConfig(fsa, packName, model.security)
+		securityGenerator.generateSecurityConfig(fsa, packName, model.services, model.security)
 
 	}
 
@@ -207,7 +213,18 @@ class SpringBoardGenerator extends AbstractGenerator {
 		  </build>
 		</project>
 	'''
-
+	def DetailService findDetailService(Security security){
+		if(security !==null){
+			for(SecurityOption : security.securities){
+				for(SecOption secOp : SecurityOption.optionalSetting){
+					if(secOp instanceof DetailService){
+						return secOp
+						}
+					}
+				}
+			}
+		}
+	
 	def CharSequence generateSource(String packName) '''
 		package «packName»;
 		

@@ -29,6 +29,7 @@ package «packName».controllers;
 import «packName».models.*;
 import org.springframework.web.bind.annotation.*;
 import «packName».services.I«model.name»;
+
 import javax.validation.Valid;
 import java.util.List;
 import java.time.LocalDateTime;

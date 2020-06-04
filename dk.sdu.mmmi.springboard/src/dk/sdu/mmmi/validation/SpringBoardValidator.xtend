@@ -18,6 +18,8 @@ import dk.sdu.mmmi.springBoard.Lt
 import dk.sdu.mmmi.springBoard.Lteq
 import dk.sdu.mmmi.springBoard.Gteq
 import dk.sdu.mmmi.springBoard.Comp
+import dk.sdu.mmmi.springBoard.SecurityOptions
+import dk.sdu.mmmi.springBoard.DetailService
 
 /**
  * This class contains custom validation rules. 
@@ -115,4 +117,13 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 			default: ''
 		}
 	}
+	
+	@Check
+	def checkServiceModelisChosen(SecurityOptions Options){
+		if(Options.optionalSetting.filter[option | option instanceof DetailService].size !==1){	
+			error("A WebSecurityConfig must have a single DetailService", SpringBoardPackage.Literals.SECURITY_OPTIONS__OPTIONAL_SETTING)
+		}
+	
+	}
+
 }

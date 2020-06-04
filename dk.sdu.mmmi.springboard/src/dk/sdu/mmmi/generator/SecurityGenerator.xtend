@@ -6,14 +6,28 @@ import dk.sdu.mmmi.springBoard.Encoder
 import dk.sdu.mmmi.springBoard.DetailService
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import dk.sdu.mmmi.springBoard.Model
+import java.util.List
+import dk.sdu.mmmi.springBoard.Role
+import dk.sdu.mmmi.springBoard.SecurityOptions
+import java.util.ArrayList
+import java.util.Iterator
+import dk.sdu.mmmi.springBoard.Protocol
+import dk.sdu.mmmi.springBoard.Ipaddress
+import dk.sdu.mmmi.springBoard.Service
+import dk.sdu.mmmi.springBoard.Local
+import dk.sdu.mmmi.springBoard.Post
+import dk.sdu.mmmi.springBoard.Get
+import dk.sdu.mmmi.springBoard.Put
+import dk.sdu.mmmi.springBoard.Delete
 
 class SecurityGenerator {
 	boolean httpBasic = false;
 	boolean https = false;
-	
+	List<Role> roleCandidates = new ArrayList();
+	Iterator<Role> iterator = roleCandidates.iterator();
 	val mavenSrcStructure = "src/main/java/"
 	
-	def CharSequence generateSecurityConfigFile(String packageName, Security security, IFileSystemAccess2 fsa) '''
+	def CharSequence generateSecurityConfigFile(String packageName, Security security, List<Service> services, IFileSystemAccess2 fsa) '''
 	package «packageName».security;
 	
 	import org.springframework.context.annotation.Bean;
@@ -24,12 +38,14 @@ class SecurityGenerator {
 	import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 	import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 	«EncodeImports(security)»
+	«containsRestrictions(security)»
 	
 	@Configuration
 	@EnableWebSecurity
 	public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		
-		«DetailService(security, fsa, packageName)»
+	«DetailService(security, fsa, packageName)»
+		«generateRoleEnum(fsa, packageName, security)»
 	
 		@Override
 		protected void configure(final AuthenticationManagerBuilder auth) {
@@ -40,6 +56,10 @@ class SecurityGenerator {
 	
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
+		http.authorizeRequests()
+		«ipRestrictions(security, services)»
+		«invariantRestrictions(security)»
+		«httpChoice(security)»
 		
 		}
 		
@@ -52,12 +72,63 @@ class SecurityGenerator {
 		}	
 	}
 	'''
+	def CharSequence containsRestrictions(Security security){
+		'''
+		«FOR invariantCandidate: security.securities.filter(invariant | invariant.requestRestrictions !== null)»
+			«IF invariantCandidate.requestRestrictions.size() > 0»
+			import org.springframework.http.HttpMethod;		
+			«ENDIF»
+		«ENDFOR»
+		'''
+	}
+	def CharSequence ipRestrictions(Security security, List<Service> services){
+		'''
+		«FOR secoption: security.securities.filter(secopt | secopt.optionalSetting !== null)»
+			«FOR ipAddress : secoption.optionalSetting.filter(ip | ip instanceof Ipaddress)»
+				.antMatchers
+				«FOR service : services.filter(methods | methods !== null)»
+					«FOR method : service.methods.filter(candidate | candidate.name.equals((ipAddress as Ipaddress).base.name))»
+				«method.apipath».hasIpAddress("«(ipAddress as Ipaddress).ipAddress»")
+					«ENDFOR»
+				«ENDFOR»
+			«ENDFOR»
+		«ENDFOR»		
+		'''
+		
+	}
+	def CharSequence httpChoice(Security security){
+		'''
+		«FOR secoption: security.securities.filter(secopt | secopt.optionalSetting !== null)»
+			«FOR httpProtocol : secoption.optionalSetting.filter(http | http instanceof Protocol)»
+				«IF (httpProtocol as Protocol).http.toLowerCase().equals("basic") || (httpProtocol as Protocol).http.toLowerCase().equals("simple")».and().requiresChannel().anyRequest().requiresInsecure(); «ENDIF»
+				«IF (httpProtocol as Protocol).http.toLowerCase().equals("secure") || (httpProtocol as Protocol).http.toLowerCase().equals("safe") ».and().requiresChannel().anyRequest().requiresSecure(); «ENDIF»
+			«ENDFOR»
+		«ENDFOR»
+		'''
+	}
 	
+	def CharSequence invariantRestrictions(Security security){
+		'''
+		«FOR invariantCandidate: security.securities.filter(invariant | invariant.requestRestrictions !== null)»
+			«FOR invariant : invariantCandidate.requestRestrictions.filter(rule | !(rule.request instanceof Local))»
+				«IF invariant.request instanceof Post»			
+				 .antMatchers(HttpMethod.POST, "/api/**").hasRole("«invariant.role.name»")
+				 «ELSEIF invariant.request instanceof Get»
+				 .antMatchers(HttpMethod.GET, "/api/**").hasRole("«invariant.role.name»")
+				 «ELSEIF invariant.request instanceof Put»
+				 .antMatchers(HttpMethod.PUT, "/api/**").hasRole("«invariant.role.name»")
+				 «ELSEIF invariant.request instanceof Delete»
+				 .antMatchers(HttpMethod.DELETE, "/api/**").hasRole("«invariant.role.name»")
+				 «ENDIF»
+			«ENDFOR»
+		«ENDFOR»
+		'''
+	}
 	def CharSequence PasswordEncoder(Security security) {
 		'''
 		«IF security !== null»
-			«FOR sec:security.securities.filter(sec | sec.option !== null && sec.option.size != 0)»
-				«FOR option: sec.option.filter(option | option instanceof SecOption)»
+			«FOR sec:security.securities.filter(sec | sec.optionalSetting !== null && sec.optionalSetting.size != 0)»
+				«FOR option: sec.optionalSetting.filter(option | option instanceof SecOption)»
 					«IF option instanceof Encoder»
 						@Bean
 						public PasswordEncoder passwordEncoder() {
@@ -82,9 +153,10 @@ class SecurityGenerator {
 	def DetailService(Security security, IFileSystemAccess2 fsa, String packname) {
 		'''
 		«IF security !==null»
-		«FOR sec:security.securities.filter(sec | sec.option !== null && sec.option.size != 0)»
-						«FOR option: sec.option.filter(option | option instanceof SecOption)»
+		«FOR sec:security.securities.filter(sec | sec.optionalSetting !== null && sec.optionalSetting.size != 0)»
+						«FOR option: sec.optionalSetting.filter(option | option instanceof SecOption)»
 						«IF option instanceof DetailService»
+					
 						«generateDetailServiceImpl(fsa, packname, option)»
 						«generatePrincipal(fsa, packname, option, security)»
 						private «option.base.name»DetailServiceImpl detailService;
@@ -104,8 +176,8 @@ class SecurityGenerator {
 	def CharSequence EncodeImports(Security security) {
 		'''
 		«IF security !== null»
-		«FOR sec:security.securities.filter(sec | sec.option !== null  && sec.option.size != 0)»
-				«FOR option: sec.option.filter(option | option instanceof SecOption)»
+		«FOR sec:security.securities.filter(sec | sec.optionalSetting !== null  && sec.optionalSetting.size != 0)»
+				«FOR option: sec.optionalSetting.filter(option | option instanceof SecOption)»
 				«IF option instanceof Encoder»
 				import org.springframework.security.crypto.password.PasswordEncoder;
 					«IF option.encode.toLowerCase.equals("bcrypt")»
@@ -157,6 +229,24 @@ class SecurityGenerator {
 		}
 		'''
 	}
+	def CharSequence generateRoleEnumFile(IFileSystemAccess2 fsa, String packageName, Security security){
+		gatherRoles(security);
+		'''
+		package «packageName».security;
+		import com.fasterxml.jackson.annotation.JsonFormat;
+		@JsonFormat(shape = JsonFormat.Shape.STRING)
+		public enum Role {
+		«FOR securityOption : security.securities.filter(securities | securities !== null)»
+			«FOR roles : securityOption.roles.filter(role | role.name !==null)»
+		«roles.name.toUpperCase()»,
+			«ENDFOR»
+		«ENDFOR»
+
+		}
+			
+		'''
+	}
+	
 	
 	def CharSequence generatePrincipalFile(IFileSystemAccess2 fsa, String packageName, DetailService service, Security security){
 		'''
@@ -179,7 +269,9 @@ class SecurityGenerator {
 		      public Collection<? extends GrantedAuthority> getAuthorities() {
 		          String rolePrefix = "ROLE_";
 		          List<GrantedAuthority> authorities = new ArrayList<>();
-		          «generateAuthorityRoles(security)»
+		          for(Role role : _«service.base.name».getRoles()) {
+		          	authorities.add(new SimpleGrantedAuthority(rolePrefix + role.name()));	
+		          }
 		          return authorities;
 		      }
 			
@@ -220,14 +312,22 @@ class SecurityGenerator {
 		'''
 	}
 	
-	def CharSequence generateAuthorityRoles(Security security) {
-		'''		
-		«FOR securityOption: security.securities.filter(securities| securities.roles !== null)»
-			«FOR roles : securityOption.roles.filter(role | role.name !== null)»
-				authorities.add(new SimpleGrantedAuthority(rolePrefix + "«roles.name.toUpperCase()»"));
-			«ENDFOR»
-		«ENDFOR»
-		'''
+	
+	def List<Role> gatherRoles(Security security){
+		for(SecurityOptions secOpt: security.securities){
+			if(secOpt.roles !== null && secOpt.roles.size()>0){
+				for(Role role : secOpt.roles){
+					roleCandidates.add(role)
+				}					
+			}
+		}
+		return roleCandidates;			
+		}
+	def generateRoleEnum(IFileSystemAccess2 fsa, String packName, Security security){
+		fsa.generateFile(
+			mavenSrcStructure + packName.replace('.', '/') + "/security/"+"Role"+".java",
+				generateRoleEnumFile(fsa, packName, security)
+		)
 	}
 	
 	def generateDetailServiceImpl(IFileSystemAccess2 fsa, String packName, DetailService service) {
@@ -244,10 +344,10 @@ class SecurityGenerator {
 		)
 	}
 	
-	def generateSecurityConfig(IFileSystemAccess2 fsa, String packName,Security security){
+	def generateSecurityConfig(IFileSystemAccess2 fsa, String packName,List<Service> services, Security security){
 		fsa.generateFile(
 			mavenSrcStructure + packName.replace('.', '/') + "/security/"+"WebSecurityConfig.java",
-				generateSecurityConfigFile(packName, security, fsa)
+				generateSecurityConfigFile(packName, security, services, fsa)
 		)
 		
 	

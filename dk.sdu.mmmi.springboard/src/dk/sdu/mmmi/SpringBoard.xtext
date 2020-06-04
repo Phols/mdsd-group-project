@@ -58,12 +58,13 @@ Security:
 	{Security} 'security' ':' securities+=SecurityOptions*
 ;
 
+// to create invariant rules for specific subtypes
 SecurityOptions:
-	'WebSecurityConfig' '{' option+=SecOption+ '}' | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=ReqRestriction+ '}'
+	'WebSecurityConfig' '{' optionalSetting+=SecOption+ '}' | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=ReqRestriction+ '}'
 ;
 
 ReqRestriction:
-	Request ':' to=[Role]
+	request=Request ':' role=[Role]
 ;
 
 Role:
@@ -72,7 +73,7 @@ Role:
 
 // Returns secOption to be able to reference SecOption in xtext
 SecOption returns SecOption:
-	{Encoder}'encoder' ':' encode=ID | {Protocol}'http' ':' http=ID | {Ipaddress}'IPRange' ':' base=[Method] ':' IP | {DetailService} base=[Model]'-service'
+	{Encoder}'encoder' ':' encode=ID | {Protocol}'http' ':' http=ID | {Ipaddress}'IPRange' ':' base=[Method] '(' ipAddress=IP ')' | {DetailService} base=[Model]'-service'
 ;
 
 IP:

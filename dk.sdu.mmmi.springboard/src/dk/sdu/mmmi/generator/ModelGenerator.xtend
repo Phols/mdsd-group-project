@@ -18,6 +18,7 @@ import dk.sdu.mmmi.springBoard.Lteq
 import dk.sdu.mmmi.springBoard.Eq
 import dk.sdu.mmmi.springBoard.Gt
 import dk.sdu.mmmi.springBoard.Flt
+import dk.sdu.mmmi.springBoard.DetailService
 
 class ModelGenerator {
 	
@@ -25,19 +26,23 @@ class ModelGenerator {
 	/**
 	 * TODO: instead of importing all models, we could check for inheritance and fields using a model type!
 	 */
-	def CharSequence generateModel(Model model, String packName, boolean hasSubclasses)'''
+	def CharSequence generateModel(Model model, String packName, boolean hasSubclasses, boolean isSecurityChosen, DetailService detailService)'''
 	package «packName».models;
 	
 	import javax.persistence.*;
 	import java.util.*;
 	import java.time.*;
 	import «packName».models.*;
+	«IF isSecurityChosen»
+	import «packName».security.Role;
+	«ENDIF»
 	
 	@Entity
 	@Table(name = "T_«model.name.toUpperCase»")
 	«IF hasSubclasses && model.inh === null»@Inheritance«ENDIF»
 	public class «model.name»«IF model.inh!==null» extends «model.inh.base.name»«ENDIF» {
 		
+
 		«FOR f:model.fields»
 		«IF f.type instanceof Identifier»
 		@Id
@@ -50,15 +55,23 @@ class ModelGenerator {
 		«generateTypeAnnotation(f.type as ModelType)»
 		«ENDIF»
 		private «computeType(f.type)» _«f.name»;
+		
 		«ENDFOR»
+		«IF model.name.equals(detailService.base.name)»
+		private List<Role> _roles;
+		«ENDIF»
 		
 		public «model.name»() { }
 		
 		«FOR f:model.fields»
+		«IF f.name.toLowerCase.equals("username") && isSecurityChosen»
+		public List<Role> getRoles(){
+			return _roles;	
+		}
+		«ENDIF»
 		public «computeType(f.type)» get«f.name.toFirstUpper»() {
 			return _«f.name»;
 		}
-		
 		«ENDFOR»
 		«FOR f:model.fields»
 		public void set«f.name.toFirstUpper» («computeType(f.type)» «f.name») «IF f.inv !== null»throws IllegalArgumentException«ENDIF» {
@@ -163,9 +176,9 @@ class ModelGenerator {
 	}
 	
 	
-	def createModel(Model model, IFileSystemAccess2 fsa, String packName, boolean hasSubclasses) {
+	def createModel(Model model, IFileSystemAccess2 fsa, String packName, boolean hasSubclasses, boolean isSecurityChosen, DetailService detailService) {
 		fsa.generateFile(mavenSrcStructure+packName.replace('.', '/')+"/models/"+model.name+".java", 
-			generateModel(model, packName, hasSubclasses)
+			generateModel(model, packName, hasSubclasses, isSecurityChosen, detailService)
 		)
 	}
 	
