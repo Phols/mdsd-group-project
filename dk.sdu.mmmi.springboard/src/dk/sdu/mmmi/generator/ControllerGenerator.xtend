@@ -110,7 +110,6 @@ public class «model.name»Controller {
 			
 			«ENDFOR»
 			'''
-	
 
 	def dispatch CharSequence show(Dt dt) '''LocalDateTime'''
 

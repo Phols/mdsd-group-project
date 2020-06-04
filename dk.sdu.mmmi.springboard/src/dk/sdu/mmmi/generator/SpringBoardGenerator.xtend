@@ -25,17 +25,14 @@ class SpringBoardGenerator extends AbstractGenerator {
 	@Inject extension ModelGenerator modelGenerator
 	@Inject extension RepositoryGenerator repositoryGenerator
 	@Inject extension ControllerGenerator controllerGenerator
+	@Inject extension SecurityGenerator securityGenerator
 
 	val mavenSrcStructure = "src/main/java/"
 	val mavenTestStructure = "src/test/java/"
 	List<Model> modelsWithSubClasses = new ArrayList<Model>();
-
+	boolean securityChosen = false;
+	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
-//		fsa.generateFile('greetings.txt', 'People to greet: ' + 
-//			resource.allContents
-//				.filter(Greeting)
-//				.map[name]
-//				.join(', '))
 		val model = resource.allContents.filter(SpringBoard).next
 		val packName = createPackageName(model.pkg)
 
@@ -46,13 +43,15 @@ class SpringBoardGenerator extends AbstractGenerator {
 				modelsWithSubClasses.add(individualModel)
 			}
 		}
-
+		if(model.security !== null){
+			securityChosen = true;	
+		}
 		model.services.forEach[ element |
 			serviceGenerator.createService(fsa, packName, element); 
 			serviceGenerator.createAbstractService(fsa, packName, element)]
 		model.types.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model))
-			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses)
+			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses, securityChosen)
 			(model.services.forEach[serviceElement| if (serviceElement.base.name == element.name){
 				controllerGenerator.createController(element, serviceElement, fsa, packName, isASubClass(element))	
 			}
@@ -61,6 +60,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 		
 	
 		]
+		securityGenerator.generateSecurityConfig(fsa, packName, model.security)
 
 	}
 
@@ -181,6 +181,18 @@ class SpringBoardGenerator extends AbstractGenerator {
 		    <dependency>
 		        <groupId>org.springframework.boot</groupId>
 		        <artifactId>spring-boot-starter-data-jpa</artifactId>
+		    </dependency>
+		    
+		    <dependency>
+		        <groupId>org.springframework.security</groupId>
+		        <artifactId>spring-security-config</artifactId>
+		    	<version>5.1.3.RELEASE</version>
+		    </dependency>
+		    
+		    <dependency>
+		           <groupId>org.springframework.security</groupId>
+		           <artifactId>spring-security-web</artifactId>
+		           <version>4.0.1.RELEASE</version>
 		    </dependency>
 		     
 		    <dependency>
