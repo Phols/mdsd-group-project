@@ -71,10 +71,10 @@ class SecurityGenerator {
 «««	Probably Fix			«ELSEIF option.encode.toLowerCase.equals("abstract")» 
 «««							«option.encode»PasswordEncoder
 						«ENDIF»
-					«ENDIF»
-						} 
+					«ENDIF»	
 				«ENDFOR»
 			«ENDFOR»
+			}
 		«ENDIF»
 		'''
 	}

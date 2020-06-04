@@ -92,7 +92,11 @@ enum CRUDActions:
 ;
 
 Method:
-	req=Request name=ID inp=Input ':' type=Type res=Res?
+	req=Request name=ID inp=Input ':' type=Type res=Res? apipath=Api?
+;
+
+Api:
+	"(" STRING ")"
 ;
 
 Request returns Request:

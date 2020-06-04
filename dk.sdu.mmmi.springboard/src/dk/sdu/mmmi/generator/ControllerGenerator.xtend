@@ -101,9 +101,14 @@ public class «model.name»Controller {
 		'''
 	}
 
+
 	def generateServiceMethods(Service service, Model model)'''
 			«FOR m : service.methods.filter[m | !(m.req instanceof Local)]»
+				«IF m.apipath !== null»
+			@«m.req.showReq»Mapping«m.apipath»
+				«ELSE»
 			@«m.req.showReq»Mapping("/api/«model.name.toLowerCase»/«m.name.toLowerCase»")
+				«ENDIF»
 			«m.type.show» «m.name»(«IF m.inp.args !== null»«m.inp.args.show»«ENDIF»){
 				return 	«model.name.toFirstLower»Service.«m.name»(«IF m.inp.args !== null»«m.inp.args.showName»«ENDIF»);
 			}
