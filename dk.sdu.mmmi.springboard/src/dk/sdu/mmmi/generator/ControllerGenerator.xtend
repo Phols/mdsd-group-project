@@ -18,6 +18,7 @@ import dk.sdu.mmmi.springBoard.Get
 import dk.sdu.mmmi.springBoard.Put
 import dk.sdu.mmmi.springBoard.Delete
 import dk.sdu.mmmi.springBoard.Local
+import dk.sdu.mmmi.springBoard.Method
 
 class ControllerGenerator {
 
@@ -52,12 +53,10 @@ public class «model.name»Controller {
 	}
 
 	def createController(Model model, Service service, IFileSystemAccess2 fsa, String packName, boolean isASubClass) {
-		//if (!isASubClass) {
 			fsa.generateFile(
 				mavenSrcStructure + packName.replace('.', '/') + "/controllers/" + model.name + "Controller.java",
 				generateController(model, service, packName, isASubClass)
 			)
-		//}
 	}
 
 	def generateCRUDMethods(Service service, Model model) {
@@ -108,6 +107,7 @@ public class «model.name»Controller {
 				«IF m.apipath !== null»
 			@«m.req.showReq»Mapping«m.apipath»
 				«ELSE»
+			«m.setApipath(generatePath(m, model))»
 			@«m.req.showReq»Mapping("/api/«model.name.toLowerCase»/«m.name.toLowerCase»")
 				«ENDIF»
 			«m.type.show» «m.name»(«IF m.inp.args !== null»«m.inp.args.show»«ENDIF»){
@@ -116,7 +116,10 @@ public class «model.name»Controller {
 			
 			«ENDFOR»
 			'''
-
+	def String generatePath(Method m, Model model){
+		return "(\"/api/"+model.name.toLowerCase()+"/"+m.name.toLowerCase()+"\")"		
+		}
+		
 	def dispatch CharSequence show(Dt dt) '''LocalDateTime'''
 
 	def dispatch CharSequence show(ListOf lo) '''List<«lo.type.show»>'''

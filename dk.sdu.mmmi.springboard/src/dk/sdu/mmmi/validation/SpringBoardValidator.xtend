@@ -25,6 +25,8 @@ import dk.sdu.mmmi.springBoard.Encoder
 import dk.sdu.mmmi.springBoard.SecOption
 import dk.sdu.mmmi.springBoard.HTTP
 import dk.sdu.mmmi.springBoard.IPAddress
+import dk.sdu.mmmi.springBoard.Method
+import dk.sdu.mmmi.springBoard.Local
 
 /**
  * This class contains custom validation rules. 
@@ -181,5 +183,13 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 			error("A valid IPv4 address consists of just four octets", SpringBoardPackage.Literals.IP_ADDRESS__IP_ADDRESS)	
 		}
 	}
-
+	
+	
+	@Check
+	def checkApiPathNotAllowedForLocalMethods(Method method){
+		if(method.req instanceof Local && method.apipath !== null){
+			error("A custom endpoint can not be placed on a local method", SpringBoardPackage.Literals.METHOD__APIPATH)		
+		}
+		
+	}
 }

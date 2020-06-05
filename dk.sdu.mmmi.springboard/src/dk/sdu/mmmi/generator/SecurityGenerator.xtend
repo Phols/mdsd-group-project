@@ -82,14 +82,12 @@ class SecurityGenerator {
 	def CharSequence ipRestrictions(SecurityConfig security, List<Service> services){
 		'''
 		«FOR secoption: security.optionalSetting.filter(secopt | secopt.ipAddresses !== null)»
-«««			«FOR IPAddress : secoption.ipAddresses»
 				.antMatchers
 				«FOR service : services.filter(methods | methods !== null)»
 					«FOR method : service.methods.filter(candidate | candidate.name.equals(secoption.ipAddresses.base.name))»
-				«method.apipath».hasIpAddress("«(secoption.ipAddresses)»")
+				«method.apipath».hasIpAddress("«(secoption.ipAddresses.ipAddress)»")
 					«ENDFOR»
 				«ENDFOR»
-«««			«ENDFOR»
 		«ENDFOR»		
 		'''
 		
