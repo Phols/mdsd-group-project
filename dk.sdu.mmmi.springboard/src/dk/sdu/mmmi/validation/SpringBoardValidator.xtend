@@ -127,14 +127,15 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	}
 	
 	@Check
-	def checkServiceModelBaseClassContainsUsernameAndPassword(SecurityConfig config){
-		for (detailService : config.optionalSetting.filter(option | option instanceof DetailService)){
-			if((detailService as DetailService).base.fields.filter[field | field.name.toLowerCase.equals("username")].empty ||
-				(detailService as DetailService).base.fields.filter[field | field.name.toLowerCase.equals("password")].empty
+	def checkServiceModelBaseClassContainsUsernameAndPassword(DetailService config){
+		//for (detailServiceCandidate : config.optionalSetting.filter(option | option.detailSerivce !== null)){
+			
+			if(config.base.fields.filter[field | field.name.toLowerCase.equals("username")].empty ||
+				(config.base.fields.filter[field | field.name.toLowerCase.equals("password")].empty)
 			){
-				error("A DetailService base model must have a username and password field", SpringBoardPackage.Literals.SEC_OPTION__DETAIL_SERIVCE)
-			}
-		}
+				error("A DetailService base model must have a username and password field", SpringBoardPackage.Literals.DETAIL_SERVICE__BASE)
+			 }
+		//}
 		
 	}
 
