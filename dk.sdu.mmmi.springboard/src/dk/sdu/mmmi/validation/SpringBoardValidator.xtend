@@ -20,6 +20,7 @@ import dk.sdu.mmmi.springBoard.Gteq
 import dk.sdu.mmmi.springBoard.Comp
 import dk.sdu.mmmi.springBoard.SecurityOptions
 import dk.sdu.mmmi.springBoard.DetailService
+import dk.sdu.mmmi.springBoard.SecurityConfig
 
 /**
  * This class contains custom validation rules. 
@@ -119,11 +120,22 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	}
 	
 	@Check
-	def checkServiceModelisChosen(SecurityOptions Options){
-		if(Options.optionalSetting.filter[option | option instanceof DetailService].size !==1){	
-			error("A WebSecurityConfig must have a single DetailService", SpringBoardPackage.Literals.SECURITY_OPTIONS__OPTIONAL_SETTING)
-		}
+	def checkServiceModelisChosen(SecurityConfig config){
+		if(config.optionalSetting.filter[option | option.detailSerivce !== null].size !==1){
+			error("A WebSecurityConfig can not have more than a single DetailService", SpringBoardPackage.Literals.SECURITY_CONFIG__OPTIONAL_SETTING)
+		}	
+	}
 	
+	@Check
+	def checkServiceModelBaseClassContainsUsernameAndPassword(SecurityConfig config){
+		for (detailService : config.optionalSetting.filter(option | option instanceof DetailService)){
+			if((detailService as DetailService).base.fields.filter[field | field.name.toLowerCase.equals("username")].empty ||
+				(detailService as DetailService).base.fields.filter[field | field.name.toLowerCase.equals("password")].empty
+			){
+				error("A DetailService base model must have a username and password field", SpringBoardPackage.Literals.SEC_OPTION__DETAIL_SERIVCE)
+			}
+		}
+		
 	}
 
 }

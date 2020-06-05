@@ -57,8 +57,10 @@ class ModelGenerator {
 		private «computeType(f.type)» _«f.name»;
 		
 		«ENDFOR»
-		«IF model.name.equals(detailService.base.name)»
+		«IF detailService !== null»
+			«IF model.name.equals(detailService.base.name)»
 		private List<Role> _roles;
+			«ENDIF»
 		«ENDIF»
 		
 		public «model.name»() { }

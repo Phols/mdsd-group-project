@@ -16,6 +16,7 @@ import java.util.List
 import dk.sdu.mmmi.springBoard.DetailService
 import dk.sdu.mmmi.springBoard.Security
 import dk.sdu.mmmi.springBoard.SecOption
+import dk.sdu.mmmi.springBoard.SecurityConfig
 
 /**
  * Generates code from your model files on save.
@@ -32,24 +33,35 @@ class SpringBoardGenerator extends AbstractGenerator {
 
 	val mavenSrcStructure = "src/main/java/"
 	val mavenTestStructure = "src/test/java/"
-	List<Model> modelsWithSubClasses = new ArrayList<Model>();
-	boolean securityChosen = false;
-	DetailService detailService = null;
+	List<Model> modelsWithSubClasses;
+	boolean securityChosen;
+	DetailService detailService;
+	SecurityConfig securityConfig;
 	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
+		modelsWithSubClasses = new ArrayList<Model>();
+		securityChosen = false;
+		detailService = null;
+		securityConfig = null;
+	
 		val model = resource.allContents.filter(SpringBoard).next
 		val packName = createPackageName(model.pkg)
-		
-		if(model.security !== null){
-			securityChosen = true;
-			detailService = findDetailService(model.security);	
-		}
 		generateSpringProjectStructure(fsa, packName)
+		
 
 		for (Model individualModel : model.types.filter(Model)) {
 			if (hasSubclasses(individualModel, model)) {
 				modelsWithSubClasses.add(individualModel)
 			}
+		}
+		
+		if(model.security !== null && model.security.securities.size !== 0){
+			securityChosen = true;
+			securityConfig = findSecurityConfig(model.security);
+			if(securityConfig !== null){
+			detailService = findDetailService(securityConfig);	
+			}
+				
 		}
 
 		model.services.forEach[ element |
@@ -66,7 +78,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 		
 	
 		]
-		securityGenerator.generateSecurityConfig(fsa, packName, model.services, model.security)
+		securityGenerator.generateSecurityConfig(fsa, packName, model.services, model.security, securityConfig)
 
 	}
 
@@ -213,17 +225,24 @@ class SpringBoardGenerator extends AbstractGenerator {
 		  </build>
 		</project>
 	'''
-	def DetailService findDetailService(Security security){
-		if(security !==null){
-			for(SecurityOption : security.securities){
-				for(SecOption secOp : SecurityOption.optionalSetting){
-					if(secOp instanceof DetailService){
-						return secOp
+	def DetailService findDetailService(SecurityConfig securityConfig){
+		if(securityConfig !==null){
+			for(SecurityOption : securityConfig.optionalSetting){
+					if(SecurityOption.detailSerivce !== null){
+						return SecurityOption.detailSerivce;
 						}
 					}
+			}
+		}
+	def SecurityConfig findSecurityConfig(Security security){
+		if(security !== null){
+			for(SecurityOption : security.securities){
+				if(SecurityOption.securityConfig !== null){
+					return SecurityOption.securityConfig;
 				}
 			}
 		}
+	}
 	
 	def CharSequence generateSource(String packName) '''
 		package «packName»;
