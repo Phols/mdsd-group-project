@@ -1,25 +1,22 @@
 package dk.sdu.mmmi.generator
 
-import dk.sdu.mmmi.springBoard.Security
-import dk.sdu.mmmi.springBoard.SecOption
-import dk.sdu.mmmi.springBoard.Encoder
+import dk.sdu.mmmi.springBoard.Delete
 import dk.sdu.mmmi.springBoard.DetailService
-import org.eclipse.xtext.generator.IFileSystemAccess2
-import dk.sdu.mmmi.springBoard.Model
-import java.util.List
-import dk.sdu.mmmi.springBoard.Role
-import dk.sdu.mmmi.springBoard.SecurityOptions
-import java.util.ArrayList
-import java.util.Iterator
-import dk.sdu.mmmi.springBoard.Protocol
-import dk.sdu.mmmi.springBoard.Ipaddress
-import dk.sdu.mmmi.springBoard.Service
+import dk.sdu.mmmi.springBoard.Encoder
+import dk.sdu.mmmi.springBoard.Get
 import dk.sdu.mmmi.springBoard.Local
 import dk.sdu.mmmi.springBoard.Post
-import dk.sdu.mmmi.springBoard.Get
 import dk.sdu.mmmi.springBoard.Put
-import dk.sdu.mmmi.springBoard.Delete
+import dk.sdu.mmmi.springBoard.Role
+import dk.sdu.mmmi.springBoard.SecOption
+import dk.sdu.mmmi.springBoard.Security
 import dk.sdu.mmmi.springBoard.SecurityConfig
+import dk.sdu.mmmi.springBoard.SecurityOptions
+import dk.sdu.mmmi.springBoard.Service
+import java.util.ArrayList
+import java.util.Iterator
+import java.util.List
+import org.eclipse.xtext.generator.IFileSystemAccess2
 
 class SecurityGenerator {
 	boolean httpBasic = false;
@@ -84,23 +81,29 @@ class SecurityGenerator {
 	}
 	def CharSequence ipRestrictions(SecurityConfig security, List<Service> services){
 		'''
-		«FOR secoption: security.optionalSetting.filter(secopt | secopt instanceof Ipaddress)»
+		«FOR secoption: security.optionalSetting.filter(secopt | secopt.ipAddresses !== null)»
+«««			«FOR IPAddress : secoption.ipAddresses»
 				.antMatchers
 				«FOR service : services.filter(methods | methods !== null)»
-					«FOR method : service.methods.filter(candidate | candidate.name.equals((secoption as Ipaddress).base.name))»
-				«method.apipath».hasIpAddress("«(secoption as Ipaddress).ipAddress»")
+					«FOR method : service.methods.filter(candidate | candidate.name.equals(secoption.ipAddresses.base.name))»
+				«method.apipath».hasIpAddress("«(secoption.ipAddresses)»")
 					«ENDFOR»
 				«ENDFOR»
+«««			«ENDFOR»
 		«ENDFOR»		
 		'''
 		
 	}
 	def CharSequence httpChoice(SecurityConfig security){
 		'''
-		«FOR secoption: security.optionalSetting.filter(secopt | secopt instanceof Protocol)»
-				«IF (secoption as Protocol).http.toLowerCase().equals("basic") || (secoption as Protocol).http.toLowerCase().equals("simple")».and().requiresChannel().anyRequest().requiresInsecure(); «ENDIF»
-				«IF (secoption as Protocol).http.toLowerCase().equals("secure") || (secoption as Protocol).http.toLowerCase().equals("safe") ».and().requiresChannel().anyRequest().requiresSecure(); «ENDIF»
+		«IF security.optionalSetting.filter[secopt | secopt.http !== null].size != 0 »
+		«FOR secoption: security.optionalSetting.filter(secopt | secopt.http !== null)»
+				«IF secoption.http.type.toLowerCase().equals("basic")».and().requiresChannel().anyRequest().requiresInsecure();
+				«ELSEIF secoption.http.type.toLowerCase().equals("secure")».and().requiresChannel().anyRequest().requiresSecure(); 
+				«ENDIF»
 		«ENDFOR»
+		«ELSE».and().requiresChannel().anyRequest().requiresSecure();
+		«ENDIF»
 		'''
 	}
 	
@@ -124,21 +127,17 @@ class SecurityGenerator {
 	def CharSequence PasswordEncoder(SecurityConfig securityConfig) {
 		'''
 		«IF securityConfig !== null && securityConfig.optionalSetting !== null»
-				«FOR option: securityConfig.optionalSetting.filter(option | option instanceof SecOption)»
-					«IF option instanceof Encoder»
+				«FOR option: securityConfig.optionalSetting.filter(option | option.encoder !== null)»
 						@Bean
 						public PasswordEncoder passwordEncoder() {
 							return new 
-						«IF option.encode.toLowerCase.equals("bcrypt")»
+						«IF option.encoder.encode.toLowerCase.equals("bcrypt")»
 								BCryptPasswordEncoder();
-						«ELSEIF option.encode.toLowerCase.equals("scrypt")»
+						«ELSEIF option.encoder.encode.toLowerCase.equals("scrypt")»
 								SCryptPasswordEncoder();
-						«ELSEIF option.encode.toLowerCase.equals("pbkdf2")»
+						«ELSEIF option.encoder.encode.toLowerCase.equals("pbkdf2")»
 								Pbkdf2PasswordEncoder();
-«««	Probably Fix			«ELSEIF option.encode.toLowerCase.equals("abstract")» 
-«««							«option.encode»PasswordEncoder
 						«ENDIF»
-					«ENDIF»	
 				«ENDFOR»
 			}
 		«ENDIF»
@@ -148,12 +147,12 @@ class SecurityGenerator {
 	def DetailService(SecurityConfig securityConfig, Security security, IFileSystemAccess2 fsa, String packname) {
 		'''
 		«IF securityConfig !==null»
-						«FOR option: securityConfig.optionalSetting.filter(option | option.detailSerivce!==null)»					
-						«generateDetailServiceImpl(fsa, packname, option.detailSerivce)»
-						«generatePrincipal(fsa, packname, option.detailSerivce, security)»
-						private «option.detailSerivce.base.name»DetailServiceImpl detailService;
+						«FOR option: securityConfig.optionalSetting.filter(option | option.detailService!==null)»					
+						«generateDetailServiceImpl(fsa, packname, option.detailService)»
+						«generatePrincipal(fsa, packname, option.detailService, security)»
+						private «option.detailService.base.name»DetailServiceImpl detailService;
 						
-						public WebSecurityConfig(«option.detailSerivce.base.name»DetailServiceImpl detailService){
+						public WebSecurityConfig(«option.detailService.base.name»DetailServiceImpl detailService){
 							this.detailService = detailService;
 						}
 						«ENDFOR»
@@ -166,19 +165,17 @@ class SecurityGenerator {
 	def CharSequence EncodeImports(SecurityConfig securityConfig) {
 		'''
 		«IF securityConfig !== null»
-				«FOR option: securityConfig.optionalSetting.filter(option | option instanceof SecOption)»
-				«IF option instanceof Encoder»
+				«FOR option: securityConfig.optionalSetting.filter(option | option.encoder !== null)»
 				import org.springframework.security.crypto.password.PasswordEncoder;
-					«IF option.encode.toLowerCase.equals("bcrypt")»
+					«IF option.encoder.encode.toLowerCase.equals("bcrypt")»
 				import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-					«ELSEIF option.encode.toLowerCase.equals("scrypt")»
+					«ELSEIF option.encoder.encode.toLowerCase.equals("scrypt")»
 				import org.springframework.security.crypto.scrypt;
-					«ELSEIF option.encode.toLowerCase.equals("abstract")»
+					«ELSEIF option.encoder.encode.toLowerCase.equals("abstract")»
 				import org.springframework.security.crypto.password.AbstractPasswordEncoder;
-					«ELSEIF option.encode.toLowerCase.equals("pbkdf2")»
+					«ELSEIF option.encoder.encode.toLowerCase.equals("pbkdf2")»
 				import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;			
 					«ENDIF»
-				«ENDIF»
 				«ENDFOR»
 		«ENDIF»
 		'''

@@ -21,6 +21,10 @@ import dk.sdu.mmmi.springBoard.Comp
 import dk.sdu.mmmi.springBoard.SecurityOptions
 import dk.sdu.mmmi.springBoard.DetailService
 import dk.sdu.mmmi.springBoard.SecurityConfig
+import dk.sdu.mmmi.springBoard.Encoder
+import dk.sdu.mmmi.springBoard.SecOption
+import dk.sdu.mmmi.springBoard.HTTP
+import dk.sdu.mmmi.springBoard.IPAddress
 
 /**
  * This class contains custom validation rules. 
@@ -33,7 +37,9 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	Pattern rPattern = Pattern.compile("([R]).*([R])")
 	Pattern uPattern = Pattern.compile("([U]).*([U])")
 	Pattern dPattern = Pattern.compile("([D]).*([D])")
-
+	Pattern ipPattern = Pattern.compile("([0-9]|[1-8][0-9]|9[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])")
+	String ipRegex = ("([0-9]|[1-8][0-9]|9[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])")
+	
 	@Check
 	def checkCrudActions(CRUD crud) {
 		
@@ -120,23 +126,60 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	}
 	
 	@Check
-	def checkServiceModelisChosen(SecurityConfig config){
-		if(config.optionalSetting.filter[option | option.detailSerivce !== null].size !==1){
-			error("A WebSecurityConfig can not have more than a single DetailService", SpringBoardPackage.Literals.SECURITY_CONFIG__OPTIONAL_SETTING)
+	def checkDetailServiceRequirement(SecurityConfig config){
+		if(config.optionalSetting.filter[option | option.detailService !== null].size !==1){
+			error("A WebSecurityConfig needs a single Detailservice", SpringBoardPackage.Literals.SECURITY_CONFIG__OPTIONAL_SETTING)
 		}	
 	}
 	
 	@Check
-	def checkServiceModelBaseClassContainsUsernameAndPassword(DetailService config){
-		//for (detailServiceCandidate : config.optionalSetting.filter(option | option.detailSerivce !== null)){
-			
+	def checkEncoderRequirement(SecurityConfig config){
+		if(config.optionalSetting.filter[option | option.encoder !== null].size !==1){
+			error("A WebSecurityConfig needs a single Encoder", SpringBoardPackage.Literals.SECURITY_CONFIG__OPTIONAL_SETTING)
+		}	
+	}
+	
+	@Check
+	def checkEncoderNaming(Encoder encoder){
+			if(!encoder.encode.toLowerCase.equals('bcrypt') &&
+				!encoder.encode.toLowerCase.equals("scrypt") &&
+				!encoder.encode.toLowerCase.equals("pbkdf2")){
+					error("The currently supported encoders types are: 'BCrypt', 'SCrypt' and 'PBKDF2", SpringBoardPackage.Literals.ENCODER__ENCODE)
+				}
+	}
+	
+	@Check
+	def checkHTTPNaming(HTTP http){
+		//for(SecOption sec : config.optionalSetting.filter(option | option.http !== null)){
+			if(!http.type.toLowerCase.equals('secure') &&
+				!http.type.toLowerCase.equals("basic")){
+					error("The currently supported http naming schemes are: 'secure' or 'basic", SpringBoardPackage.Literals.HTTP__TYPE)
+				}
+		//}	
+	}
+	
+	
+	@Check
+	def checkServiceModelBaseClassContainsUsernameAndPassword(DetailService config){		
 			if(config.base.fields.filter[field | field.name.toLowerCase.equals("username")].empty ||
 				(config.base.fields.filter[field | field.name.toLowerCase.equals("password")].empty)
 			){
 				error("A DetailService base model must have a username and password field", SpringBoardPackage.Literals.DETAIL_SERVICE__BASE)
 			 }
-		//}
 		
+	}
+	
+	@Check
+	def checkIpRangeIsValid(IPAddress restriction){
+		for(String : restriction.ipAddress.split('\\.')){
+			if (!String.matches(ipRegex)) {
+				error('Only octets between 0 and 255 are valid', SpringBoardPackage.Literals.IP_ADDRESS__IP_ADDRESS);
+			}
+		}
+		
+		if (restriction.ipAddress.split('\\.').length!==4){
+			error("A valid IPv4 address consists of just four octets", SpringBoardPackage.Literals.IP_ADDRESS__IP_ADDRESS)	
+		}
 	}
 
 }

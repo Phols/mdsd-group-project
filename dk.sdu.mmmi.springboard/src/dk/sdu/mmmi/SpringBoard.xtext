@@ -76,13 +76,25 @@ Role:
 
 // Returns secOption to be able to reference SecOption in xtext
 SecOption returns SecOption:
-	{Encoder}'encoder' ':' encode=ID | {Protocol}'http' ':' http=ID | {Ipaddress}'IPRange' ':' base=[Method] '(' ipAddress=IP ')' | detailSerivce=DetailService
+	encoder=Encoder | http=HTTP | ipAddresses=IPAddress | detailService=DetailService
 ;
 
+HTTP:
+	'http' ':' type=ID
+;
+// Required for validation
+Encoder:
+	'encoder' ':' encode=ID
+;
+
+//Required for validation
 DetailService:
 	base=[Model]'-service'
 ;
 
+IPAddress:
+	'IPRange' ':' base=[Method] '(' ipAddress=IP ')'
+;
 IP:
 	INT ('.' INT)*
 ;

@@ -228,8 +228,8 @@ class SpringBoardGenerator extends AbstractGenerator {
 	def DetailService findDetailService(SecurityConfig securityConfig){
 		if(securityConfig !==null){
 			for(SecurityOption : securityConfig.optionalSetting){
-					if(SecurityOption.detailSerivce !== null){
-						return SecurityOption.detailSerivce;
+					if(SecurityOption.detailService !== null){
+						return SecurityOption.detailService;
 						}
 					}
 			}
