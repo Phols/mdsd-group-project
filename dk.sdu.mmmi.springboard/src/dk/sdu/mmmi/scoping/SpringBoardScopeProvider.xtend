@@ -15,6 +15,10 @@ import dk.sdu.mmmi.springBoard.ListOf
 import dk.sdu.mmmi.springBoard.ModelType
 import dk.sdu.mmmi.springBoard.Comp
 import dk.sdu.mmmi.springBoard.Method
+import dk.sdu.mmmi.springBoard.Args
+import dk.sdu.mmmi.springBoard.Type
+import java.util.List
+import dk.sdu.mmmi.springBoard.Input
 
 /**
  * This class contains custom scoping description.
@@ -25,26 +29,74 @@ import dk.sdu.mmmi.springBoard.Method
 class SpringBoardScopeProvider extends AbstractSpringBoardScopeProvider {
 
 	override IScope getScope(EObject context, EReference reference) {
-		if (context instanceof Comp && reference == Literals.COMP__RIGHT) {
-			var methods = EcoreUtil2.getContainerOfType(context, Method);
-			val candidates = new ArrayList<Field>
-
-			var type = methods.type;
-
-			if (type instanceof ListOf) {
-				type = (type as ListOf).type
-			}
-			if (type instanceof ModelType) {
-				var model = (type as ModelType)
-				candidates.addAll(model.base.getFields.filter(Field))
-				if (model.base.inh !== null) {
-					candidates.addAll(model.base.inh.base.getFields.filter(Field))
-				}
-			} else {
-				return super.getScope(context, reference)
-			}
-			return Scopes.scopeFor(candidates)
+//		if (context instanceof Comp) {
+//			val candidates = new ArrayList<Field>
+////			var methods = EcoreUtil2.getContainerOfType(context, Method);
+////			candidates.addAll(addCandidatesFromType(methods.type))
+//			if((context as Comp).left instanceof Args && (context as Comp).left !== null ){
+//				var test22 = (context as Comp).left
+//				candidates.addAll(addCandidatesFromType(test22.type))
+//			}
+//			
+//			if((context as Comp).left instanceof Field && (context as Comp).left !== null){
+//				var test23 = (context as Comp).right
+//				candidates.addAll(addCandidatesFromType(test23.type))
+//				
+//			}
+//			
+//			if((context as Comp).right instanceof Args && (context as Comp).right !== null){
+//				var test24 = (context as Comp).left
+//				candidates.addAll(addCandidatesFromType(test24.type))
+//				
+//			}
+//			
+//			if((context as Comp).right instanceof Field && (context as Comp).right !== null){
+//				var test25 = (context as Comp).right
+//				candidates.addAll(addCandidatesFromType(test25.type))
+//				
+//			}
+//			
+//			
+//			
+			
+//			var methods = EcoreUtil2.getContainerOfType(context, Method);
+//			var inputs = EcoreUtil2.getContainerOfType(context, Input)
+//			
+//			var methodType = methods.type
+//			var Type inputArgsType;
+//			var Type nextInputArgsType;
+//			
+//			
+//			if(args.next !== null){
+//				nextArgsType = args.next.type;
+//				candidates.addAll(addCandidatesFromType(nextArgsType))
+//			}
+//			candidates.addAll(addCandidatesFromType(argsType))
+//			candidates.addAll(addCandidatesFromType(methodType))
+//			candidates.addAll(addCandidatesFromType(fieldType))
+//			return Scopes.scopeFor(candidates)
+//		} else {
+			return super.getScope(context, reference)
 		}
-		return super.getScope(context, reference)
+	
+	def List<Field> addCandidatesFromType(Type type){
+		var Type typeToCheck = type;
+		val candidates = new ArrayList<Field>
+		
+		if (typeToCheck instanceof ListOf) {
+			typeToCheck = (type as ListOf).type
+		}
+		
+		if (typeToCheck instanceof ModelType) {
+			var model = (typeToCheck as ModelType)
+			candidates.addAll(model.base.getFields.filter(Field))
+			
+			if (model.base.inh !== null) {
+			candidates.addAll(model.base.inh.base.getFields.filter(Field))
+			}
+		
+		}
+		return candidates;
+		
 	}
 }

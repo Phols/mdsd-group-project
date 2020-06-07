@@ -29,9 +29,6 @@ Model:
 	name=ID inh=Inherit? '{' fields+=Field* '}'
 ;
 
-Field:
-	name=ID ':' type=Type (inv=Invariant)?
-;
 
 Invariant:
 	'[' prop=Property op=Operator value=INT ']'
@@ -45,10 +42,6 @@ Operator returns Operator:
 	{Lt} '<' | {Gt} '>' | {Eq} '=' | {Lteq} '<=' | {Gteq} '>=' | {Neq} '<>'
 ;
 
-Type returns Type:
-	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {Flt} 'float' | {ModelType} (base=[Model] direction='*'?) | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
-;
-
 Inherit:
 	'inherits' base=[Model]
 ;
@@ -60,12 +53,17 @@ Security:
 
 // to create invariant rules for specific subtypes
 SecurityOptions:
-	securityConfig=SecurityConfig | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=ReqRestriction+ '}'
+	securityConfig=SecurityConfig | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=ReqRestriction+ '}' | ipwhitelist=IPWhitelist
 ;
 
 SecurityConfig:
 	'WebSecurityConfig' '{' optionalSetting+=SecOption+ '}'
 ;
+
+IPWhitelist:
+	'IPRange' '{'ipAddresses=MultipleIPs'}'
+;
+
 ReqRestriction:
 	request=Request ':' role=[Role]
 ;
@@ -76,7 +74,7 @@ Role:
 
 // Returns secOption to be able to reference SecOption in xtext
 SecOption returns SecOption:
-	encoder=Encoder | http=HTTP | ipAddresses=IPAddress | detailService=DetailService
+	encoder=Encoder | http=HTTP | limitedipAddress=LimitedIP | detailService=DetailService | roles=RoleRequirement
 ;
 
 HTTP:
@@ -92,11 +90,24 @@ DetailService:
 	base=[Model]'-service'
 ;
 
-IPAddress:
-	'IPRange' ':' base=[Method] '(' ipAddress=IP ')'
+
+MultipleIPs:
+	first=IP(',' next+=IP)*
+;
+
+LimitedIP:
+	'LimitIP' ':' base=[Method] '(' ipAddress=IP ')'
 ;
 IP:
 	INT ('.' INT)*
+;
+
+RoleRequirement:
+	'Authorisation' ':'  base=[Method] '('roles=AuthorisedRoles')'
+;
+
+AuthorisedRoles:
+	role=[Role] (',' roles+=[Role])*
 ;
 
 Service:
@@ -133,7 +144,7 @@ Res:
 //
 //Exp:
 //	left=Prim right=Prim
-//;
+//;1½
 //
 //Prim returns Exp:
 //	type=Type
@@ -155,17 +166,27 @@ Input:
 	{Input} '(' args=Args? ')'
 ;
 
+//Comp:
+//	left=Type op=Operator right=Type	
+//;
+
+
 Args:
 	name=ID ':' type=Type (',' next=Args)?
 ;
 
-Comp:
-	left=[Args] op=Operator right=[Field]	
+Field:
+	name=ID ':' type=Type (inv=Invariant)?
 ;
 
-//Comp:
-//	left=[Args] op=Operator right=[Field]
-//;
+Type returns Type:
+	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {Flt} 'float' | {ModelType} (base=[Model] direction='*'?) | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
+;
+
+
+Comp:
+	left=[Args] op=Operator right=[Field]
+;
 
 //Logic returns Logic:
 //	left=Conjunction({LogicOr.left=current}'||' right=Logic)?

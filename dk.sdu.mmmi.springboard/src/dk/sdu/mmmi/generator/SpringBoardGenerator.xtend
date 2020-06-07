@@ -15,8 +15,9 @@ import java.util.ArrayList
 import java.util.List
 import dk.sdu.mmmi.springBoard.DetailService
 import dk.sdu.mmmi.springBoard.Security
-import dk.sdu.mmmi.springBoard.SecOption
 import dk.sdu.mmmi.springBoard.SecurityConfig
+import dk.sdu.mmmi.springBoard.IPWhitelist
+import dk.sdu.mmmi.springBoard.RoleRequirement
 
 /**
  * Generates code from your model files on save.
@@ -37,6 +38,8 @@ class SpringBoardGenerator extends AbstractGenerator {
 	boolean securityChosen;
 	DetailService detailService;
 	SecurityConfig securityConfig;
+	IPWhitelist ipWhitelist;
+	List<RoleRequirement> roleRequirement;
 	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 		modelsWithSubClasses = new ArrayList<Model>();
@@ -58,9 +61,12 @@ class SpringBoardGenerator extends AbstractGenerator {
 		if(model.security !== null && model.security.securities.size !== 0){
 			securityChosen = true;
 			securityConfig = findSecurityConfig(model.security);
+			ipWhitelist = findWhitelist(model.security);
 			if(securityConfig !== null){
-			detailService = findDetailService(securityConfig);	
+			detailService = findDetailService(securityConfig);
+			roleRequirement = findRoleRequirement(securityConfig);	
 			}
+		
 				
 		}
 
@@ -78,10 +84,10 @@ class SpringBoardGenerator extends AbstractGenerator {
 		
 	
 		]
-		securityGenerator.generateSecurityConfig(fsa, packName, model.services, model.security, securityConfig)
+		securityGenerator.generateSecurityConfig(fsa, packName, model.services, model.security, securityConfig, ipWhitelist, roleRequirement)
 
 	}
-
+	
 	def isASubClass(Model element) {
 		if (element.inh !== null) {
 			return true
@@ -243,6 +249,29 @@ class SpringBoardGenerator extends AbstractGenerator {
 			}
 		}
 	}
+	
+	def IPWhitelist findWhitelist(Security security) {
+		if(security !== null){
+			for(SecurityOption : security.securities){
+				if(SecurityOption.ipwhitelist !== null){
+					return SecurityOption.ipwhitelist;
+				}
+			}
+		}
+	}
+	
+	def List<RoleRequirement> findRoleRequirement(SecurityConfig security) {
+		roleRequirement = new ArrayList();
+		if(security !== null){
+			for(SecurityOption : security.optionalSetting){
+				if(SecurityOption.roles !== null){
+					roleRequirement.add(SecurityOption.roles);
+				}
+			}
+			return roleRequirement
+		}
+	}
+	
 	
 	def CharSequence generateSource(String packName) '''
 		package «packName»;

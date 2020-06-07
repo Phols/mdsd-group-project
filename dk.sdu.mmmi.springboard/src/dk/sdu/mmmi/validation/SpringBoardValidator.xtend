@@ -18,15 +18,14 @@ import dk.sdu.mmmi.springBoard.Lt
 import dk.sdu.mmmi.springBoard.Lteq
 import dk.sdu.mmmi.springBoard.Gteq
 import dk.sdu.mmmi.springBoard.Comp
-import dk.sdu.mmmi.springBoard.SecurityOptions
 import dk.sdu.mmmi.springBoard.DetailService
 import dk.sdu.mmmi.springBoard.SecurityConfig
 import dk.sdu.mmmi.springBoard.Encoder
-import dk.sdu.mmmi.springBoard.SecOption
 import dk.sdu.mmmi.springBoard.HTTP
-import dk.sdu.mmmi.springBoard.IPAddress
 import dk.sdu.mmmi.springBoard.Method
 import dk.sdu.mmmi.springBoard.Local
+import dk.sdu.mmmi.springBoard.Security
+import dk.sdu.mmmi.springBoard.MultipleIPs
 
 /**
  * This class contains custom validation rules. 
@@ -39,9 +38,7 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	Pattern rPattern = Pattern.compile("([R]).*([R])")
 	Pattern uPattern = Pattern.compile("([U]).*([U])")
 	Pattern dPattern = Pattern.compile("([D]).*([D])")
-	Pattern ipPattern = Pattern.compile("([0-9]|[1-8][0-9]|9[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])")
 	String ipRegex = ("([0-9]|[1-8][0-9]|9[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])")
-	
 	@Check
 	def checkCrudActions(CRUD crud) {
 		
@@ -108,10 +105,10 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	
 	@Check
 	def checkComparisonOperator(Comp comp) {
-		if (comp.left.type.class !== comp.right.type.class) {
+		if (comp.left !== comp.right) {
 			error("Type mismatch", comp, SpringBoardPackage.Literals.COMP__RIGHT)
 		}
-		switch comp.left.type {
+		switch comp.left {
 			ModelType,
 			ListOf,
 			Bool,
@@ -172,16 +169,80 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	}
 	
 	@Check
-	def checkIpRangeIsValid(IPAddress restriction){
-		for(String : restriction.ipAddress.split('\\.')){
+	def checkLimitedIPisDefined(Security security){	
+		if((security.securities.filter(option | option.ipwhitelist !== null).size > 0)){
+			if(security.securities.filter(option | option.securityConfig !== null).size > 0){
+				for(secOption : security.securities.filter(option | option.securityConfig !== null)){
+					if(secOption.securityConfig.optionalSetting !== null && (secOption.securityConfig.optionalSetting.size() > 0)){
+						for(configOption : secOption.securityConfig.optionalSetting.filter(option | option.limitedipAddress !== null)){
+							for(whiteList : security.securities.filter(option | option.ipwhitelist !== null)){
+								if(!configOption.limitedipAddress.ipAddress.equals(whiteList.ipwhitelist.ipAddresses.first) && !whiteList.ipwhitelist.ipAddresses.next.contains(configOption.limitedipAddress.ipAddress) ){
+//									
+//								} else if (whiteList.ipwhitelist.ips.next.contains(configOption.limitedipAddress.ipAddress)){
+//									
+//								} else{
+									error("LimitIP: You can only limit a previous defined IP (as part of a 'IPRANGE')", SpringBoardPackage.Literals.SECURITY__SECURITIES);	
+								}
+							}					
+						}
+					}
+				}
+			}		
+		}
+	}	
+//		if(security.securities.filter(option | option.ipwhitelist !== null).size > 0){
+//			whitelists.clear();
+//			whitelists.addAll(security.securities.filter(option | option.ipwhitelist !== null));
+//		}
+//		if(security.securities.filter(option | option.securityConfig !== null).size > 0){
+//			securityConfig.clear();
+//			securityConfig.addAll(security.securities.filter(option | option.securityConfig !== null))
+//			config = (securityConfig.get(0).getSecurityConfig as SecurityConfig);
+//		}
+//		for(setting: config.optionalSetting){
+//			if(setting.limitedipAddress !== null){
+//				limit = (setting.limitedipAddress as LimitedIP);
+//			}			
+//		}
+//		
+//		for(whiteList : whitelists){
+//			if((whiteList.ipwhitelist as IPWhitelist).ips.first.equals(limit.ipAddress)){
+//								//
+//			} else if((whiteList.ipwhitelist as IPWhitelist).ips.next.contains(limit.ipAddress)){
+//							//
+//			} else {
+//			error("You can only limit a previous defined IP (as part of a 'IPRANGE')", SpringBoardPackage.Literals.SECURITY__SECURITIES);
+//			}
+//			
+//		}
+		
+					
+//	}
+
+	
+	@Check
+	def checkIpRangeIsValidForIPS(MultipleIPs ip){
+		for(String : ip.first.split('\\.')){
 			if (!String.matches(ipRegex)) {
-				error('Only octets between 0 and 255 are valid', SpringBoardPackage.Literals.IP_ADDRESS__IP_ADDRESS);
+				error('Only octets between 0 and 255 are valid', SpringBoardPackage.Literals.MULTIPLE_IPS__FIRST);
 			}
 		}
 		
-		if (restriction.ipAddress.split('\\.').length!==4){
-			error("A valid IPv4 address consists of just four octets", SpringBoardPackage.Literals.IP_ADDRESS__IP_ADDRESS)	
+		if (ip.first.split('\\.').length!==4){
+			error("A valid IPv4 address consists of just four octets", SpringBoardPackage.Literals.MULTIPLE_IPS__FIRST)	
 		}
+		
+		for(String : ip.next){
+			for(ipaddress : String.split('\\.')){
+				if (!ipaddress.matches(ipRegex)) {
+					error('Only octets between 0 and 255 are valid', SpringBoardPackage.Literals.MULTIPLE_IPS__NEXT);
+				}
+				if (String.split('\\.').length!==4){
+				error("A valid IPv4 address consists of just four octets", SpringBoardPackage.Literals.MULTIPLE_IPS__NEXT)	
+				}
+			}	
+		}
+		
 	}
 	
 	

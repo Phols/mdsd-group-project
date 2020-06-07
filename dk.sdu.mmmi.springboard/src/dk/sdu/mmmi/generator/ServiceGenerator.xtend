@@ -232,7 +232,7 @@ class ServiceGenerator {
 	}
 	
 	def CharSequence comparisonFunction(Comp comp) {
-		switch comp.left.type {
+		switch comp.left {
 			Lon,
 			Flt,
 			Int: numOperator(comp)
@@ -247,46 +247,46 @@ class ServiceGenerator {
 	}
 	
 	def CharSequence objOperator(Comp comp) {
-		val right = 'temp.get'+comp.right.name.toFirstUpper+'())'
+		val right = 'temp.get'+comp.right.show+'())'
 		switch comp.op {
 			Lt,
-			Gt: '!'+comp.left.name+'.equals('+right
-			Eq: comp.left.name+'.equals('+right
-			Neq: '!'+comp.left.name+'.equals('+right
+			Gt: '!'+comp.left.show+'.equals('+right
+			Eq: comp.left.show+'.equals('+right
+			Neq: '!'+comp.left.show+'.equals('+right
 			default: ''
 		}	
 	}
 	
 	def CharSequence boolOperator(Comp comp) {
-		val right = 'temp.get'+comp.right.name.toFirstUpper+'()'
+		val right = 'temp.get'+comp.right.show+'()'
 		switch comp.op {
-			Eq: comp.left.name+'=='+right
-			Neq: comp.left.name+'!='+right
+			Eq: comp.left.show+'=='+right
+			Neq: comp.left.show+'!='+right
 		}		
 	}
 	
 	def CharSequence dtOperator(Comp comp) {
-		val right = 'temp.get'+comp.right.name.toFirstUpper+'())'
+		val right = 'temp.get'+comp.right.show+'())'
 		switch comp.op {
-			Lt: comp.left.name+'.isBefore('+right
-			Gt: comp.left.name+'.isAfter('+right
-			Eq: comp.left.name+'.equals('+right
-			Gteq: comp.left.name+'.equals('+right +'||'+comp.left.name+'.isAfter('+right 
-			Lteq: comp.left.name+'.equals('+right +'||'+comp.left.name+'.isBefore('+right 
-			Neq: '!'+comp.left.name+'.equals('+right
+			Lt: comp.left.show+'.isBefore('+right
+			Gt: comp.left.show+'.isAfter('+right
+			Eq: comp.left.show+'.equals('+right
+			Gteq: comp.left.show+'.equals('+right +'||'+comp.left.show+'.isAfter('+right 
+			Lteq: comp.left.show+'.equals('+right +'||'+comp.left.show+'.isBefore('+right 
+			Neq: '!'+comp.left.show+'.equals('+right
 			default: ''
 		}	
 	}
 	
 	def CharSequence numOperator(Comp comp) {
-		val right = 'temp.get'+comp.right.name.toFirstUpper+'()'
+		val right = 'temp.get'+comp.right.show+'()'
 		switch comp.op {
-			Lt: comp.left.name+'<'+right
-			Gt: comp.left.name+'>'+right
-			Eq: comp.left.name+'=='+right
-			Gteq: comp.left.name+'>='+right
-			Lteq: comp.left.name+'<='+right
-			Neq: comp.left.name+'!='+right
+			Lt: comp.left.show+'<'+right
+			Gt: comp.left.show+'>'+right
+			Eq: comp.left.show+'=='+right
+			Gteq: comp.left.show+'>='+right
+			Lteq: comp.left.show+'<='+right
+			Neq: comp.left.show+'!='+right
 			default: ''
 		}
 	}

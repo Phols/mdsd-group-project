@@ -2,30 +2,28 @@ package dk.sdu.mmmi.generator
 
 import dk.sdu.mmmi.springBoard.Delete
 import dk.sdu.mmmi.springBoard.DetailService
-import dk.sdu.mmmi.springBoard.Encoder
 import dk.sdu.mmmi.springBoard.Get
 import dk.sdu.mmmi.springBoard.Local
 import dk.sdu.mmmi.springBoard.Post
 import dk.sdu.mmmi.springBoard.Put
 import dk.sdu.mmmi.springBoard.Role
-import dk.sdu.mmmi.springBoard.SecOption
 import dk.sdu.mmmi.springBoard.Security
 import dk.sdu.mmmi.springBoard.SecurityConfig
 import dk.sdu.mmmi.springBoard.SecurityOptions
 import dk.sdu.mmmi.springBoard.Service
 import java.util.ArrayList
-import java.util.Iterator
 import java.util.List
 import org.eclipse.xtext.generator.IFileSystemAccess2
+import dk.sdu.mmmi.springBoard.IPWhitelist
+import dk.sdu.mmmi.springBoard.Method
+import dk.sdu.mmmi.springBoard.RoleRequirement
+import dk.sdu.mmmi.springBoard.LimitedIP
 
 class SecurityGenerator {
-	boolean httpBasic = false;
-	boolean https = false;
 	List<Role> roleCandidates = new ArrayList();
-	Iterator<Role> iterator = roleCandidates.iterator();
+	List<Method> methodsAuthorised = new ArrayList();
 	val mavenSrcStructure = "src/main/java/"
-	
-	def CharSequence generateSecurityConfigFile(String packageName, SecurityConfig securityConfig, Security security, List<Service> services, IFileSystemAccess2 fsa) '''
+	def CharSequence generateSecurityConfigFile(String packageName, SecurityConfig securityConfig, Security security, List<Service> services, IPWhitelist whitelist, List<RoleRequirement> rolerequirement, IFileSystemAccess2 fsa) '''
 	package «packageName».security;
 	
 	import org.springframework.context.annotation.Bean;
@@ -41,9 +39,11 @@ class SecurityGenerator {
 	@Configuration
 	@EnableWebSecurity
 	public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-		
+	«IF whitelist !== null»
+	«IpRange(whitelist)»
+	«ENDIF»	
 	«DetailService(securityConfig, security, fsa, packageName)»
-		«generateRoleEnum(fsa, packageName, security)»
+	«generateRoleEnum(fsa, packageName, security)»
 	
 		@Override
 		protected void configure(final AuthenticationManagerBuilder auth) {
@@ -54,8 +54,12 @@ class SecurityGenerator {
 	
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
+		«allowedips(whitelist)»
 		http.authorizeRequests()
-		«ipRestrictions(securityConfig, services)»
+		«ipRestrictions(securityConfig, services, rolerequirement)»
+		«FOR role : rolerequirement»
+		«authorisation(role, methodsAuthorised)»
+		«ENDFOR»
 		«invariantRestrictions(security)»
 		«httpChoice(securityConfig)»
 		
@@ -70,6 +74,33 @@ class SecurityGenerator {
 		}	
 	}
 	'''
+	
+	def CharSequence authorisation(RoleRequirement requirement, List<Method>authorised) {
+		'''
+		«IF !authorised.contains(requirement.base)»
+		«IF requirement.roles.role !== null && requirement.roles.roles.size > 0 »
+		.antMatchers«requirement.base.apipath».hasAnyRole("«requirement.roles.role.name.toUpperCase»«FOR role : requirement.roles.roles», «role.name.toUpperCase»«ENDFOR»")
+		«ELSEIF requirement.roles.role !== null && requirement.roles.roles.size == 0»
+		.antMatchers«requirement.base.apipath».hasRole("«requirement.roles.role.name.toUpperCase»")
+		«ENDIF»
+		«ENDIF»
+		'''
+	}
+	
+	def CharSequence allowedips(IPWhitelist whitelist) {
+		if(whitelist !== null){
+		'''
+		http.authorizeRequests().anyRequest().access(ALLOWED_IPS);
+		'''
+		}
+	}
+	
+	def CharSequence IpRange(IPWhitelist whitelist) {
+		'''
+		private static final String ALLOWED_IPS =«IF whitelist.ipAddresses.first !== null»"hasIpAddress('«whitelist.ipAddresses.first»')«ENDIF»«IF whitelist.ipAddresses.next !== null»«FOR ip : whitelist.ipAddresses.next»or hasIpAddress('«ip»') «ENDFOR»";«ENDIF»
+		'''
+	}
+	
 	def CharSequence containsRestrictions(Security security){
 		'''
 		«FOR invariantCandidate: security.securities.filter(invariant | invariant.requestRestrictions !== null)»
@@ -79,19 +110,42 @@ class SecurityGenerator {
 		«ENDFOR»
 		'''
 	}
-	def CharSequence ipRestrictions(SecurityConfig security, List<Service> services){
-		'''
-		«FOR secoption: security.optionalSetting.filter(secopt | secopt.ipAddresses !== null)»
+	def CharSequence ipRestrictions(SecurityConfig security, List<Service> services, List<RoleRequirement> roleRequirement){
+		'''	
+		«FOR secoption: security.optionalSetting.filter(secopt | secopt.limitedipAddress !== null)»
 				.antMatchers
 				«FOR service : services.filter(methods | methods !== null)»
-					«FOR method : service.methods.filter(candidate | candidate.name.equals(secoption.ipAddresses.base.name))»
-				«method.apipath».hasIpAddress("«(secoption.ipAddresses.ipAddress)»")
+					«FOR method : service.methods.filter(candidate | candidate.name.equals(secoption.limitedipAddress.base.name))»
+						«FOR role : roleRequirement»
+							«IF role.base.name.equals(method.name)»
+					«method.apipath».hasIpAddress("«(secoption.limitedipAddress.ipAddress)»")«AddAuthroisation(role, method)»		
+							«ENDIF»
+						«ENDFOR»
 					«ENDFOR»
 				«ENDFOR»
 		«ENDFOR»		
 		'''
 		
 	}
+	
+	def CharSequence AddAuthroisation(RoleRequirement requirement, Method method) {
+			if(requirement.base.name.equals(method.name)){
+				if(requirement.roles.roles !== null && requirement.roles.role !== null){
+					
+				methodsAuthorised.add(method);
+				'''.anyRequest().hasAnyRole("«requirement.roles.role.name.toUpperCase»«FOR role: requirement.roles.roles», «role.name.toUpperCase»«ENDFOR»")'''
+				}
+				
+			}
+//				} else if (requirementRole.roles.roles !== null && requirementRole.roles.roles.length == 0){
+//					'''
+//					aaa
+//					'''.anyRequest().hasAnyRole("«requirementRole.roles.role.name.toUpperCase»«FOR role : requirementRole.roles.roles», «role.name.toUpperCase»«ENDFOR»")
+//				}	
+		}
+		
+		
+	
 	def CharSequence httpChoice(SecurityConfig security){
 		'''
 		«IF security.optionalSetting.filter[secopt | secopt.http !== null].size != 0 »
@@ -336,11 +390,11 @@ class SecurityGenerator {
 		
 	}
 	
-	def generateSecurityConfig(IFileSystemAccess2 fsa, String packName,List<Service> services, Security security, SecurityConfig securityConfig){
+	def generateSecurityConfig(IFileSystemAccess2 fsa, String packName,List<Service> services, Security security, SecurityConfig securityConfig, IPWhitelist whitelist, List<RoleRequirement> roleRequirement){
 		if(security !== null){
 			fsa.generateFile(
 				mavenSrcStructure + packName.replace('.', '/') + "/security/"+"WebSecurityConfig.java",
-					generateSecurityConfigFile(packName,securityConfig, security, services, fsa)
+					generateSecurityConfigFile(packName,securityConfig, security, services, whitelist, roleRequirement, fsa)
 			)
 		}
 	
