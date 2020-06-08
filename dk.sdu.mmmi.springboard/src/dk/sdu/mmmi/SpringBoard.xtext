@@ -17,7 +17,7 @@ grammar dk.sdu.mmmi.SpringBoard with org.eclipse.xtext.common.Terminals
 generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
 
 SpringBoard:
-	'package' ':' pkg=Package 'models' ':' types+=Model+ 'services' ':' services+=Service+ security=Security?	
+	'package' ':' pkg=Package 'models' ':' models+=Model+ 'services' ':' services+=Service+ security=Security?	
 ;
 
 
@@ -29,6 +29,13 @@ Model:
 	name=ID inh=Inherit? '{' fields+=Field* '}'
 ;
 
+Service:
+	base=[Model] '{' crud=CRUD? methods+=Method* '}'
+;
+
+Field:
+	name=ID ':' type=Type (inv=Invariant)?
+;
 
 Invariant:
 	'[' prop=Property op=Operator value=INT ']'
@@ -53,18 +60,18 @@ Security:
 
 // to create invariant rules for specific subtypes
 SecurityOptions:
-	securityConfig=SecurityConfig | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=ReqRestriction+ '}' | ipwhitelist=IPWhitelist
+	securityConfig=SecurityConfig | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=RequestRestriction+ '}' | ipwhitelist=IPWhitelist
 ;
 
 SecurityConfig:
-	'WebSecurityConfig' '{' optionalSetting+=SecOption+ '}'
+	'WebSecurityConfig' '{' optionalSettings+=SecOption+ '}'
 ;
 
 IPWhitelist:
 	'IPRange' '{'ipAddresses=MultipleIPs'}'
 ;
 
-ReqRestriction:
+RequestRestriction:
 	request=Request ':' role=[Role]
 ;
 
@@ -82,17 +89,12 @@ HTTP:
 ;
 // Required for validation
 Encoder:
-	'encoder' ':' encode=ID
+	'encoder' ':' name=ID
 ;
 
 //Required for validation
 DetailService:
 	base=[Model]'-service'
-;
-
-
-MultipleIPs:
-	first=IP(',' next+=IP)*
 ;
 
 LimitedIP:
@@ -102,6 +104,11 @@ IP:
 	INT ('.' INT)*
 ;
 
+MultipleIPs:
+	first=IP(',' next+=IP)*
+;
+
+
 RoleRequirement:
 	'Authorisation' ':'  base=[Method] '('roles=AuthorisedRoles')'
 ;
@@ -110,9 +117,6 @@ AuthorisedRoles:
 	role=[Role] (',' roles+=[Role])*
 ;
 
-Service:
-	base=[Model] '{' crud=CRUD? methods+=Method* '}'
-;
 
 CRUD:
 	'[' act += CRUDActions* ']'
@@ -122,6 +126,7 @@ enum CRUDActions:
 	C | R | U | D
 ;
 
+// added apipath
 Method:
 	req=Request name=ID inp=Input ':' type=Type res=Res? apipath=Api?
 ;
@@ -162,22 +167,18 @@ Res:
 //	Name | IntExp | '(' Exp ')' | Sum | SizeOf
 //;
 
-Input:
-	{Input} '(' args=Args? ')'
-;
-
 //Comp:
 //	left=Type op=Operator right=Type	
 //;
 
+Input:
+	{Input} '(' args=Args? ')'
+;
 
 Args:
 	name=ID ':' type=Type (',' next=Args)?
 ;
 
-Field:
-	name=ID ':' type=Type (inv=Invariant)?
-;
 
 Type returns Type:
 	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {Flt} 'float' | {ModelType} (base=[Model] direction='*'?) | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'

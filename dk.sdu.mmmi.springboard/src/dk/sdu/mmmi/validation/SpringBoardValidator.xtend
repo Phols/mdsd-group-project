@@ -126,24 +126,24 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	
 	@Check
 	def checkDetailServiceRequirement(SecurityConfig config){
-		if(config.optionalSetting.filter[option | option.detailService !== null].size !==1){
-			error("A WebSecurityConfig needs a single Detailservice", SpringBoardPackage.Literals.SECURITY_CONFIG__OPTIONAL_SETTING)
+		if(config.optionalSettings.filter[option | option.detailService !== null].size !==1){
+			error("A WebSecurityConfig needs a single Detailservice", SpringBoardPackage.Literals.SECURITY_CONFIG__OPTIONAL_SETTINGS)
 		}	
 	}
 	
 	@Check
 	def checkEncoderRequirement(SecurityConfig config){
-		if(config.optionalSetting.filter[option | option.encoder !== null].size !==1){
-			error("A WebSecurityConfig needs a single Encoder", SpringBoardPackage.Literals.SECURITY_CONFIG__OPTIONAL_SETTING)
+		if(config.optionalSettings.filter[option | option.encoder !== null].size !==1){
+			error("A WebSecurityConfig needs a single Encoder", SpringBoardPackage.Literals.SECURITY_CONFIG__OPTIONAL_SETTINGS)
 		}	
 	}
 	
 	@Check
 	def checkEncoderNaming(Encoder encoder){
-			if(!encoder.encode.toLowerCase.equals('bcrypt') &&
-				!encoder.encode.toLowerCase.equals("scrypt") &&
-				!encoder.encode.toLowerCase.equals("pbkdf2")){
-					error("The currently supported encoders types are: 'BCrypt', 'SCrypt' and 'PBKDF2", SpringBoardPackage.Literals.ENCODER__ENCODE)
+			if(!encoder.name.toLowerCase.equals('bcrypt') &&
+				!encoder.name.toLowerCase.equals("scrypt") &&
+				!encoder.name.toLowerCase.equals("pbkdf2")){
+					error("The currently supported encoders types are: 'BCrypt', 'SCrypt' and 'PBKDF2", SpringBoardPackage.Literals.ENCODER__NAME)
 				}
 	}
 	
@@ -173,8 +173,8 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 		if((security.securities.filter(option | option.ipwhitelist !== null).size > 0)){
 			if(security.securities.filter(option | option.securityConfig !== null).size > 0){
 				for(secOption : security.securities.filter(option | option.securityConfig !== null)){
-					if(secOption.securityConfig.optionalSetting !== null && (secOption.securityConfig.optionalSetting.size() > 0)){
-						for(configOption : secOption.securityConfig.optionalSetting.filter(option | option.limitedipAddress !== null)){
+					if(secOption.securityConfig.optionalSettings !== null && (secOption.securityConfig.optionalSettings.size() > 0)){
+						for(configOption : secOption.securityConfig.optionalSettings.filter(option | option.limitedipAddress !== null)){
 							for(whiteList : security.securities.filter(option | option.ipwhitelist !== null)){
 								if(!configOption.limitedipAddress.ipAddress.equals(whiteList.ipwhitelist.ipAddresses.first) && !whiteList.ipwhitelist.ipAddresses.next.contains(configOption.limitedipAddress.ipAddress) ){
 //									

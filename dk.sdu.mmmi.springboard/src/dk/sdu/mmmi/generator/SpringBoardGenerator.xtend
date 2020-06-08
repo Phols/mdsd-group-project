@@ -52,7 +52,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 		generateSpringProjectStructure(fsa, packName)
 		
 
-		for (Model individualModel : model.types.filter(Model)) {
+		for (Model individualModel : model.models.filter(Model)) {
 			if (hasSubclasses(individualModel, model)) {
 				modelsWithSubClasses.add(individualModel)
 			}
@@ -73,7 +73,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 		model.services.forEach[ element |
 			serviceGenerator.createService(fsa, packName, element); 
 			serviceGenerator.createAbstractService(fsa, packName, element)]
-		model.types.filter(Model).forEach[ element |
+		model.models.filter(Model).forEach[ element |
 			modelGenerator.createModel(element, fsa, packName, hasSubclasses(element, model), securityChosen, detailService)
 			repositoryGenerator.createRepository(element, fsa, packName, modelsWithSubClasses, securityChosen)
 			(model.services.forEach[serviceElement| if (serviceElement.base.name == element.name){
@@ -100,7 +100,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	 * https://blog.netgloo.com/2014/12/18/handling-entities-inheritance-with-spring-data-jpa/
 	 */
 	def hasSubclasses(Model element, SpringBoard model) {
-		for (Model m : model.types.filter(Model)) {
+		for (Model m : model.models.filter(Model)) {
 			if(m.inh !== null && m.inh.base.name == element.name) return true
 		}
 		return false
@@ -233,7 +233,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	'''
 	def DetailService findDetailService(SecurityConfig securityConfig){
 		if(securityConfig !==null){
-			for(SecurityOption : securityConfig.optionalSetting){
+			for(SecurityOption : securityConfig.optionalSettings){
 					if(SecurityOption.detailService !== null){
 						return SecurityOption.detailService;
 						}
@@ -263,7 +263,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 	def List<RoleRequirement> findRoleRequirement(SecurityConfig security) {
 		roleRequirement = new ArrayList();
 		if(security !== null){
-			for(SecurityOption : security.optionalSetting){
+			for(SecurityOption : security.optionalSettings){
 				if(SecurityOption.roles !== null){
 					roleRequirement.add(SecurityOption.roles);
 				}

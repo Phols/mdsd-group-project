@@ -112,14 +112,16 @@ class SecurityGenerator {
 	}
 	def CharSequence ipRestrictions(SecurityConfig security, List<Service> services, List<RoleRequirement> roleRequirement){
 		'''	
-		«FOR secoption: security.optionalSetting.filter(secopt | secopt.limitedipAddress !== null)»
+		«FOR secoption: security.optionalSettings.filter(secopt | secopt.limitedipAddress !== null)»
 				.antMatchers
 				«FOR service : services.filter(methods | methods !== null)»
 					«FOR method : service.methods.filter(candidate | candidate.name.equals(secoption.limitedipAddress.base.name))»
 						«FOR role : roleRequirement»
 							«IF role.base.name.equals(method.name)»
 					«method.apipath».hasIpAddress("«(secoption.limitedipAddress.ipAddress)»")«AddAuthroisation(role, method)»		
-							«ENDIF»
+							«ELSE»
+					«method.apipath».hasIpAddress("«(secoption.limitedipAddress.ipAddress)»")
+							«ENDIF»		
 						«ENDFOR»
 					«ENDFOR»
 				«ENDFOR»
@@ -130,26 +132,20 @@ class SecurityGenerator {
 	
 	def CharSequence AddAuthroisation(RoleRequirement requirement, Method method) {
 			if(requirement.base.name.equals(method.name)){
-				if(requirement.roles.roles !== null && requirement.roles.role !== null){
-					
+				if(requirement.roles.roles !== null && requirement.roles.role !== null){	
 				methodsAuthorised.add(method);
 				'''.anyRequest().hasAnyRole("«requirement.roles.role.name.toUpperCase»«FOR role: requirement.roles.roles», «role.name.toUpperCase»«ENDFOR»")'''
 				}
 				
 			}
-//				} else if (requirementRole.roles.roles !== null && requirementRole.roles.roles.length == 0){
-//					'''
-//					aaa
-//					'''.anyRequest().hasAnyRole("«requirementRole.roles.role.name.toUpperCase»«FOR role : requirementRole.roles.roles», «role.name.toUpperCase»«ENDFOR»")
-//				}	
 		}
 		
 		
 	
 	def CharSequence httpChoice(SecurityConfig security){
 		'''
-		«IF security.optionalSetting.filter[secopt | secopt.http !== null].size != 0 »
-		«FOR secoption: security.optionalSetting.filter(secopt | secopt.http !== null)»
+		«IF security.optionalSettings.filter[secopt | secopt.http !== null].size != 0 »
+		«FOR secoption: security.optionalSettings.filter(secopt | secopt.http !== null)»
 				«IF secoption.http.type.toLowerCase().equals("basic")».and().requiresChannel().anyRequest().requiresInsecure();
 				«ELSEIF secoption.http.type.toLowerCase().equals("secure")».and().requiresChannel().anyRequest().requiresSecure(); 
 				«ENDIF»
@@ -164,13 +160,13 @@ class SecurityGenerator {
 		«FOR invariantCandidate: security.securities.filter(invariant | invariant.requestRestrictions !== null)»
 			«FOR invariant : invariantCandidate.requestRestrictions.filter(rule | !(rule.request instanceof Local))»
 				«IF invariant.request instanceof Post»			
-				 .antMatchers(HttpMethod.POST, "/api/**").hasRole("«invariant.role.name»")
+				 .antMatchers(HttpMethod.POST, "/api/**").hasRole("«invariant.role.name.toUpperCase»")
 				 «ELSEIF invariant.request instanceof Get»
-				 .antMatchers(HttpMethod.GET, "/api/**").hasRole("«invariant.role.name»")
+				 .antMatchers(HttpMethod.GET, "/api/**").hasRole("«invariant.role.name.toUpperCase»")
 				 «ELSEIF invariant.request instanceof Put»
-				 .antMatchers(HttpMethod.PUT, "/api/**").hasRole("«invariant.role.name»")
+				 .antMatchers(HttpMethod.PUT, "/api/**").hasRole("«invariant.role.name.toUpperCase»")
 				 «ELSEIF invariant.request instanceof Delete»
-				 .antMatchers(HttpMethod.DELETE, "/api/**").hasRole("«invariant.role.name»")
+				 .antMatchers(HttpMethod.DELETE, "/api/**").hasRole("«invariant.role.name.toUpperCase»")
 				 «ENDIF»
 			«ENDFOR»
 		«ENDFOR»
@@ -178,16 +174,16 @@ class SecurityGenerator {
 	}
 	def CharSequence PasswordEncoder(SecurityConfig securityConfig) {
 		'''
-		«IF securityConfig !== null && securityConfig.optionalSetting !== null»
-				«FOR option: securityConfig.optionalSetting.filter(option | option.encoder !== null)»
+		«IF securityConfig !== null && securityConfig.optionalSettings !== null»
+				«FOR option: securityConfig.optionalSettings.filter(option | option.encoder !== null)»
 						@Bean
 						public PasswordEncoder passwordEncoder() {
 							return new 
-						«IF option.encoder.encode.toLowerCase.equals("bcrypt")»
+						«IF option.encoder.name.toLowerCase.equals("bcrypt")»
 								BCryptPasswordEncoder();
-						«ELSEIF option.encoder.encode.toLowerCase.equals("scrypt")»
+						«ELSEIF option.encoder.name.toLowerCase.equals("scrypt")»
 								SCryptPasswordEncoder();
-						«ELSEIF option.encoder.encode.toLowerCase.equals("pbkdf2")»
+						«ELSEIF option.encoder.name.toLowerCase.equals("pbkdf2")»
 								Pbkdf2PasswordEncoder();
 						«ENDIF»
 				«ENDFOR»
@@ -199,7 +195,7 @@ class SecurityGenerator {
 	def DetailService(SecurityConfig securityConfig, Security security, IFileSystemAccess2 fsa, String packname) {
 		'''
 		«IF securityConfig !==null»
-						«FOR option: securityConfig.optionalSetting.filter(option | option.detailService!==null)»					
+						«FOR option: securityConfig.optionalSettings.filter(option | option.detailService!==null)»					
 						«generateDetailServiceImpl(fsa, packname, option.detailService)»
 						«generatePrincipal(fsa, packname, option.detailService, security)»
 						private «option.detailService.base.name»DetailServiceImpl detailService;
@@ -217,15 +213,13 @@ class SecurityGenerator {
 	def CharSequence EncodeImports(SecurityConfig securityConfig) {
 		'''
 		«IF securityConfig !== null»
-				«FOR option: securityConfig.optionalSetting.filter(option | option.encoder !== null)»
+				«FOR option: securityConfig.optionalSettings.filter(option | option.encoder !== null)»
 				import org.springframework.security.crypto.password.PasswordEncoder;
-					«IF option.encoder.encode.toLowerCase.equals("bcrypt")»
+					«IF option.encoder.name.toLowerCase.equals("bcrypt")»
 				import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-					«ELSEIF option.encoder.encode.toLowerCase.equals("scrypt")»
+					«ELSEIF option.encoder.name.toLowerCase.equals("scrypt")»
 				import org.springframework.security.crypto.scrypt;
-					«ELSEIF option.encoder.encode.toLowerCase.equals("abstract")»
-				import org.springframework.security.crypto.password.AbstractPasswordEncoder;
-					«ELSEIF option.encoder.encode.toLowerCase.equals("pbkdf2")»
+					«ELSEIF option.encoder.name.toLowerCase.equals("pbkdf2")»
 				import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;			
 					«ENDIF»
 				«ENDFOR»

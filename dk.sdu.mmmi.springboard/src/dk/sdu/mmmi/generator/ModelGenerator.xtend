@@ -59,7 +59,11 @@ class ModelGenerator {
 		«ENDFOR»
 		«IF detailService !== null»
 			«IF model.name.equals(detailService.base.name)»
-		private List<Role> _roles;
+			@ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
+			@CollectionTable(name = "«detailService.base.name»_roles",joinColumns = @JoinColumn(name = "«detailService.base.name»_id"))
+			@Enumerated(EnumType.STRING)
+			@Column(name = "role_id")
+			private List<Role> _roles;
 			«ENDIF»
 		«ENDIF»
 		
