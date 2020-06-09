@@ -9,7 +9,6 @@ import dk.sdu.mmmi.springBoard.Put
 import dk.sdu.mmmi.springBoard.Role
 import dk.sdu.mmmi.springBoard.Security
 import dk.sdu.mmmi.springBoard.SecurityConfig
-import dk.sdu.mmmi.springBoard.SecurityOptions
 import dk.sdu.mmmi.springBoard.Service
 import java.util.ArrayList
 import java.util.List
@@ -17,7 +16,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import dk.sdu.mmmi.springBoard.IPWhitelist
 import dk.sdu.mmmi.springBoard.Method
 import dk.sdu.mmmi.springBoard.RoleRequirement
-import dk.sdu.mmmi.springBoard.LimitedIP
+import dk.sdu.mmmi.springBoard.SecurityOption
 
 class SecurityGenerator {
 	List<Role> roleCandidates = new ArrayList();
@@ -345,7 +344,7 @@ class SecurityGenerator {
 	
 	
 	def List<Role> gatherRoles(Security security){
-		for(SecurityOptions secOpt: security.securities){
+		for(SecurityOption secOpt: security.securities){
 			if(secOpt.roles !== null && secOpt.roles.size()>0){
 				for(Role role : secOpt.roles){
 					roleCandidates.add(role)

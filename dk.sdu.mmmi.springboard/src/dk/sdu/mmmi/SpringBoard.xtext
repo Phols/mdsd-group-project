@@ -33,9 +33,6 @@ Service:
 	base=[Model] '{' crud=CRUD? methods+=Method* '}'
 ;
 
-Field:
-	name=ID ':' type=Type (inv=Invariant)?
-;
 
 Invariant:
 	'[' prop=Property op=Operator value=INT ']'
@@ -55,11 +52,11 @@ Inherit:
 
 
 Security:
-	{Security} 'security' ':' securities+=SecurityOptions*
+	{Security} 'security' ':' securities+=SecurityOption*
 ;
 
 // to create invariant rules for specific subtypes
-SecurityOptions:
+SecurityOption:
 	securityConfig=SecurityConfig | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=RequestRestriction+ '}' | ipwhitelist=IPWhitelist
 ;
 
@@ -139,17 +136,13 @@ Request returns Request:
 	{Local} 'local' | {Post} 'POST' | {Get} 'GET' | {Put} 'PUT' | {Delete} 'DELETE'
 ;
 
-Res:
-	  '{'expression=Logic'}'
-;
-
 //Comp:
 //	left=Exp op=Operator right=Exp
 //;
 //
 //Exp:
 //	left=Prim right=Prim
-//;1½
+//
 //
 //Prim returns Exp:
 //	type=Type
@@ -175,37 +168,49 @@ Input:
 	{Input} '(' args=Args? ')'
 ;
 
+Res:
+	  '{'expression=Logic'}'
+;
+
 Args:
 	name=ID ':' type=Type (',' next=Args)?
 ;
 
+Field:
+	name=ID ':' type=Type (inv=Invariant)?
+;
 
 Type returns Type:
 	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {Flt} 'float' | {ModelType} (base=[Model] direction='*'?) | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
 ;
 
-
 Comp:
 	left=[Args] op=Operator right=[Field]
 ;
 
-//Logic returns Logic:
-//	left=Conjunction({LogicOr.left=current}'||' right=Logic)?
-//;
-//
-//Conjunction returns Logic:
-//	left=PrimitiveOp ({LogicAnd.left=current}'&&' right=Conjunction)?
-//;
 
-Logic returns Proposition:
+Logic returns Logic:
 	left=Conjunction({LogicOr.left=current}'||' right=Logic)?
 ;
-
-Conjunction returns Proposition:
+//
+Conjunction returns Logic:
 	left=PrimitiveOp ({LogicAnd.left=current}'&&' right=Conjunction)?
 ;
 
-PrimitiveOp returns Proposition:
+PrimitiveOp returns Logic:
  	comp=Comp |  '('Logic')'
  ;
+
+
+//Logic returns Proposition:
+//	left=Conjunction({LogicOr.left=current}'||' right=Logic)?
+//;
+//
+//Conjunction returns Proposition:
+//	left=PrimitiveOp ({LogicAnd.left=current}'&&' right=Conjunction)?
+//;
+//
+
+
+//;
 

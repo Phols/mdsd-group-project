@@ -26,6 +26,11 @@ import dk.sdu.mmmi.springBoard.Method
 import dk.sdu.mmmi.springBoard.Local
 import dk.sdu.mmmi.springBoard.Security
 import dk.sdu.mmmi.springBoard.MultipleIPs
+import dk.sdu.mmmi.springBoard.IPWhitelist
+import org.eclipse.xtext.EcoreUtil2
+import org.eclipse.xtext.xbase.interpreter.Context
+import org.eclipse.emf.ecore.EObject
+import dk.sdu.mmmi.springBoard.LimitedIP
 
 /**
  * This class contains custom validation rules. 
@@ -105,7 +110,9 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	
 	@Check
 	def checkComparisonOperator(Comp comp) {
-		if (comp.left !== comp.right) {
+		if (comp.left.type.class !== comp.right.type.class) {
+			System.out.println(comp.left.type + "," + comp.left.name );
+			System.out.println(comp.right.type + ',' + comp.right.name);
 			error("Type mismatch", comp, SpringBoardPackage.Literals.COMP__RIGHT)
 		}
 		switch comp.left {
@@ -149,12 +156,10 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	
 	@Check
 	def checkHTTPNaming(HTTP http){
-		//for(SecOption sec : config.optionalSetting.filter(option | option.http !== null)){
 			if(!http.type.toLowerCase.equals('secure') &&
 				!http.type.toLowerCase.equals("basic")){
 					error("The currently supported http naming schemes are: 'secure' or 'basic", SpringBoardPackage.Literals.HTTP__TYPE)
 				}
-		//}	
 	}
 	
 	
@@ -167,59 +172,17 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 			 }
 		
 	}
-	
-	@Check
-	def checkLimitedIPisDefined(Security security){	
-		if((security.securities.filter(option | option.ipwhitelist !== null).size > 0)){
-			if(security.securities.filter(option | option.securityConfig !== null).size > 0){
-				for(secOption : security.securities.filter(option | option.securityConfig !== null)){
-					if(secOption.securityConfig.optionalSettings !== null && (secOption.securityConfig.optionalSettings.size() > 0)){
-						for(configOption : secOption.securityConfig.optionalSettings.filter(option | option.limitedipAddress !== null)){
-							for(whiteList : security.securities.filter(option | option.ipwhitelist !== null)){
-								if(!configOption.limitedipAddress.ipAddress.equals(whiteList.ipwhitelist.ipAddresses.first) && !whiteList.ipwhitelist.ipAddresses.next.contains(configOption.limitedipAddress.ipAddress) ){
-//									
-//								} else if (whiteList.ipwhitelist.ips.next.contains(configOption.limitedipAddress.ipAddress)){
-//									
-//								} else{
-									error("LimitIP: You can only limit a previous defined IP (as part of a 'IPRANGE')", SpringBoardPackage.Literals.SECURITY__SECURITIES);	
-								}
-							}					
-						}
-					}
-				}
-			}		
-		}
-	}	
-//		if(security.securities.filter(option | option.ipwhitelist !== null).size > 0){
-//			whitelists.clear();
-//			whitelists.addAll(security.securities.filter(option | option.ipwhitelist !== null));
-//		}
-//		if(security.securities.filter(option | option.securityConfig !== null).size > 0){
-//			securityConfig.clear();
-//			securityConfig.addAll(security.securities.filter(option | option.securityConfig !== null))
-//			config = (securityConfig.get(0).getSecurityConfig as SecurityConfig);
-//		}
-//		for(setting: config.optionalSetting){
-//			if(setting.limitedipAddress !== null){
-//				limit = (setting.limitedipAddress as LimitedIP);
-//			}			
-//		}
-//		
-//		for(whiteList : whitelists){
-//			if((whiteList.ipwhitelist as IPWhitelist).ips.first.equals(limit.ipAddress)){
-//								//
-//			} else if((whiteList.ipwhitelist as IPWhitelist).ips.next.contains(limit.ipAddress)){
-//							//
-//			} else {
-//			error("You can only limit a previous defined IP (as part of a 'IPRANGE')", SpringBoardPackage.Literals.SECURITY__SECURITIES);
-//			}
-//			
-//		}
 		
-					
-//	}
+	@Check
+	def checkLimitedIPisDefined(LimitedIP whitelistedElement){
+	var security = EcoreUtil2.getContainerOfType(whitelistedElement.eContainer(), Security);
+		for(whitelist : security.securities.filter(option | option.ipwhitelist !== null)){
+			if(!whitelistedElement.ipAddress.equals(whitelist.ipwhitelist.ipAddresses.first) && !whitelist.ipwhitelist.ipAddresses.next.contains(whitelistedElement.ipAddress) ){
+				error("You can only limit a previous defined IP (as part of a 'IPRANGE')", SpringBoardPackage.Literals.LIMITED_IP__IP_ADDRESS);	
+			}
+		}
+	}
 
-	
 	@Check
 	def checkIpRangeIsValidForIPS(MultipleIPs ip){
 		for(String : ip.first.split('\\.')){

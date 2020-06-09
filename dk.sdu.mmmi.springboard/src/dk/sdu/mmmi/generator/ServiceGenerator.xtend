@@ -24,6 +24,9 @@ import dk.sdu.mmmi.springBoard.Method
 import dk.sdu.mmmi.springBoard.LogicAnd
 import dk.sdu.mmmi.springBoard.LogicOr
 import dk.sdu.mmmi.springBoard.Comp
+import dk.sdu.mmmi.springBoard.Logic
+import dk.sdu.mmmi.springBoard.Operator
+import org.eclipse.xtext.Conjunction
 
 class ServiceGenerator {
 	
@@ -149,9 +152,9 @@ class ServiceGenerator {
 	'''
 	def handleExpression(Method m, Service service){
 		if(m.res.expression !== null){
-		//	m.res.expression.generateLogic
+		iterateExpression(m.res.expression);
 	}
-		if(m.res.expression.left.left.comp !==null){
+		if(m.res.expression.left !==null){
 		'''
 		«IF m.type instanceof ListOf»
 							«m.type.show» _return = new ArrayList<>();
@@ -159,7 +162,7 @@ class ServiceGenerator {
 							for («service.base.name» temp : _return) {
 								if (!(«comparisonFunction(m.res.expression.left.left.comp)»)) {
 									_return.remove(temp);
-								}
+								} 
 							}
 							
 							return _return;
@@ -169,7 +172,7 @@ class ServiceGenerator {
 							«ELSE»
 							«service.base.name» temp = («service.base.name») repository.findById(«getIdentifierArgument(m.inp.args)»).get();	
 							«ENDIF»
-							return «comparisonFunction(m.res.expression.left.left.comp)»
+							return «comparisonFunction(m.res.expression.left as Comp)»
 						«ELSE»
 							«IF getTypeArgument(m.inp.args, service.base) !== null»
 							«m.type.show» _return = («service.base.name») repository.find(«getTypeArgument(m.inp.args, service.base)»).get();
@@ -190,24 +193,33 @@ class ServiceGenerator {
 		
 	}
 	
-//	def dispatch CharSequence generateLogic(Args logic) ''''''
-//	def dispatch CharSequence generateLogic(Operator logic)''''''
+	def iterateExpression(Logic logic) {
+		System.out.println("test!")
+		generateLogic(logic)
+	}
+	
+	def dispatch CharSequence generateLogic(Logic logic)'''«IF logic.left !==null»«logic.left.generateLogic»«ENDIF»«IF logic.comp !== null»«comparisonFunction(logic.comp)»«ENDIF»«IF logic.right !== null»«logic.right.generateLogic»«ENDIF»'''
+	//def dispatch CharSequence generateLogic(Conjunction logic) ''''''
+	def dispatch CharSequence generateLogic(LogicOr logic) '''«logic.left.generateLogic» || «logic.right.generateLogic»'''
+	def dispatch CharSequence generateLogic(LogicAnd logic)'''«logic.left.generateLogic» && «logic.right.generateLogic»'''
+	
+	//def dispatch CharSequence generateLogic(PrimitiveOp logic)''''''
 //	
 //	
 //	def dispatch CharSequence generateLogic(Field logic)''' '''   
 	
 	
 
-	def dispatch CharSequence generateLogic(LogicAnd logic) '''(«logic.left.generateLogic»&&«logic.right.generateLogic»)'''
-	def dispatch CharSequence generateLogic(LogicOr logic) '''(«logic.left.generateLogic»||«logic.right.generateLogic»)'''
+	//def dispatch CharSequence generateLogic(LogicAnd logic) '''(«logic.left.generateLogic»&&«logic.right.generateLogic»)'''
+	//def dispatch CharSequence generateLogic(LogicOr logic) '''(«logic.left.generateLogic»||«logic.right.generateLogic»)'''
 	//def dispatch CharSequence generateLogic(Comp logic){comparisonFunction(logic)}
 	
-	def dispatch CharSequence generateLogic(Comp logic)
-	'''«IF logic !== null»
-	(«logic» test «logic»)
-		«ENDIF»
-		null
-	'''
+	//def dispatch CharSequence generateLogic(Comp logic)
+	//'''«IF logic !== null»
+	//(«logic» test «logic»)
+	//	«ENDIF»
+	//	null
+	//'''
 	
 	
 	//def dispatch CharSequence generateLogic(Comp logic){(«logic.left.Args» «logic.op» «logic.right.Field»)}
