@@ -53,14 +53,11 @@ class SecurityGenerator {
 	
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
-		«allowedips(whitelist)»
 		http.authorizeRequests()
-		«ipRestrictions(securityConfig, services, rolerequirement)»
-		«FOR role : rolerequirement»
-		«authorisation(role, methodsAuthorised)»
-		«ENDFOR»
+		«IPandAuthorisationRestrictions(securityConfig, services, rolerequirement)»
 		«invariantRestrictions(security)»
-		«httpChoice(securityConfig)»
+		«createAuthorisations(rolerequirement)»
+		«IpandSecure(whitelist, securityConfig)»
 		
 		}
 		
@@ -74,6 +71,12 @@ class SecurityGenerator {
 	}
 	'''
 	
+	def CharSequence createAuthorisations(List<RoleRequirement> rolerequirment) {
+				'''«FOR role : rolerequirment»
+						«authorisation(role, methodsAuthorised)»
+						«ENDFOR»;'''
+	}
+	
 	def CharSequence authorisation(RoleRequirement requirement, List<Method>authorised) {
 		'''
 		«IF !authorised.contains(requirement.base)»
@@ -85,14 +88,26 @@ class SecurityGenerator {
 		«ENDIF»
 		'''
 	}
-	
-	def CharSequence allowedips(IPWhitelist whitelist) {
-		if(whitelist !== null){
+		
+	def CharSequence IpandSecure(IPWhitelist whitelist, SecurityConfig security) {
+		if(whitelist !== null && security.optionalSettings.filter[secopt | secopt.http !== null].size == 0){
 		'''
-		http.authorizeRequests().anyRequest().access(ALLOWED_IPS);
+		http.authorizeRequests().anyRequest().access(ALLOWED_IPS).and().requiresChannel().anyRequest().requiresSecure();
+		'''	
+		} else if (whitelist !== null && security.optionalSettings.filter[secopt | secopt.http !== null].size !=0){
+			
 		'''
+		«FOR secoption: security.optionalSettings.filter(secopt | secopt.http !== null)»
+			«IF secoption.http.type.toLowerCase().equals("basic")»http.authorizeRequests().anyRequest().access(ALLOWED_IPS).and().requiresChannel().anyRequest().requiresInsecure();
+			«ELSEIF secoption.http.type.toLowerCase().equals("secure")»http.authorizeRequests().anyRequest().access(ALLOWED_IPS).and().requiresChannel().anyRequest().requiresSecure(); 
+			«ENDIF»
+		«ENDFOR»
+		'''	
 		}
-	}
+	}	
+
+
+	
 	
 	def CharSequence IpRange(IPWhitelist whitelist) {
 		'''
@@ -109,18 +124,14 @@ class SecurityGenerator {
 		«ENDFOR»
 		'''
 	}
-	def CharSequence ipRestrictions(SecurityConfig security, List<Service> services, List<RoleRequirement> roleRequirement){
+	def CharSequence IPandAuthorisationRestrictions(SecurityConfig security, List<Service> services, List<RoleRequirement> roleRequirement){
 		'''	
 		«FOR secoption: security.optionalSettings.filter(secopt | secopt.limitedipAddress !== null)»
-				.antMatchers
 				«FOR service : services.filter(methods | methods !== null)»
 					«FOR method : service.methods.filter(candidate | candidate.name.equals(secoption.limitedipAddress.base.name))»
+						.antMatchers«method.apipath».hasIpAddress("«(secoption.limitedipAddress.ipAddress)»")
 						«FOR role : roleRequirement»
-							«IF role.base.name.equals(method.name)»
-					«method.apipath».hasIpAddress("«(secoption.limitedipAddress.ipAddress)»")«AddAuthroisation(role, method)»		
-							«ELSE»
-					«method.apipath».hasIpAddress("«(secoption.limitedipAddress.ipAddress)»")
-							«ENDIF»		
+							«IF AddAuthroisation(role, method)».antMatchers«method.apipath».hasAnyRole("«role.roles.role.name.toUpperCase»«FOR rolename: role.roles.roles», «rolename.name.toUpperCase»«ENDFOR»")«ENDIF»					
 						«ENDFOR»
 					«ENDFOR»
 				«ENDFOR»
@@ -129,31 +140,17 @@ class SecurityGenerator {
 		
 	}
 	
-	def CharSequence AddAuthroisation(RoleRequirement requirement, Method method) {
+	def boolean AddAuthroisation(RoleRequirement requirement, Method method) {
 			if(requirement.base.name.equals(method.name)){
 				if(requirement.roles.roles !== null && requirement.roles.role !== null){	
 				methodsAuthorised.add(method);
-				'''.anyRequest().hasAnyRole("«requirement.roles.role.name.toUpperCase»«FOR role: requirement.roles.roles», «role.name.toUpperCase»«ENDFOR»")'''
+				return true
 				}
 				
 			}
+			return false;
 		}
-		
-		
-	
-	def CharSequence httpChoice(SecurityConfig security){
-		'''
-		«IF security.optionalSettings.filter[secopt | secopt.http !== null].size != 0 »
-		«FOR secoption: security.optionalSettings.filter(secopt | secopt.http !== null)»
-				«IF secoption.http.type.toLowerCase().equals("basic")».and().requiresChannel().anyRequest().requiresInsecure();
-				«ELSEIF secoption.http.type.toLowerCase().equals("secure")».and().requiresChannel().anyRequest().requiresSecure(); 
-				«ENDIF»
-		«ENDFOR»
-		«ELSE».and().requiresChannel().anyRequest().requiresSecure();
-		«ENDIF»
-		'''
-	}
-	
+			
 	def CharSequence invariantRestrictions(Security security){
 		'''
 		«FOR invariantCandidate: security.securities.filter(invariant | invariant.requestRestrictions !== null)»
