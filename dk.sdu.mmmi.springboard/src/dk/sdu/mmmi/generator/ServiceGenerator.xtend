@@ -151,16 +151,13 @@ class ServiceGenerator {
 		}
 	'''
 	def handleExpression(Method m, Service service){
-		if(m.res.expression !== null){
-		iterateExpression(m.res.expression);
-	}
-		if(m.res.expression.left !==null){
+		if(m.res.expression !==null){
 		'''
 		«IF m.type instanceof ListOf»
 							«m.type.show» _return = new ArrayList<>();
 							repository.findAll().forEach(_return::add);
 							for («service.base.name» temp : _return) {
-								if (!(«comparisonFunction(m.res.expression.left.left.comp)»)) {
+								if («generateLogic(m.res.expression)») {
 									_return.remove(temp);
 								} 
 							}
@@ -181,11 +178,11 @@ class ServiceGenerator {
 							«m.type.show» _return = («service.base.name») repository.findById(«getIdentifierArgument(m.inp.args)»).get();
 							«m.type.show» temp = _return;	
 							«ENDIF»
-							if (!(«comparisonFunction(m.res.expression.left.left.comp)»)) {
-								return null;
+							if («generateLogic(m.res.expression)») {
+								return _return;
 							}
 							
-							return _return;	
+							return null;	
 						«ENDIF»
 		'''
 		
@@ -193,40 +190,18 @@ class ServiceGenerator {
 		
 	}
 	
-	def iterateExpression(Logic logic) {
-		System.out.println("test!")
-		generateLogic(logic)
-	}
 	
-	def dispatch CharSequence generateLogic(Logic logic)'''«IF logic.left !==null»«logic.left.generateLogic»«ENDIF»«IF logic.comp !== null»«comparisonFunction(logic.comp)»«ENDIF»«IF logic.right !== null»«logic.right.generateLogic»«ENDIF»'''
-	//def dispatch CharSequence generateLogic(Conjunction logic) ''''''
-	def dispatch CharSequence generateLogic(LogicOr logic) '''«logic.left.generateLogic» || «logic.right.generateLogic»'''
-	def dispatch CharSequence generateLogic(LogicAnd logic)'''«logic.left.generateLogic» && «logic.right.generateLogic»'''
+	def dispatch CharSequence generateLogic(Logic logic)'''
+	«IF logic.left !==null»«logic.left.generateLogic»«ENDIF»
+	«IF logic.comp !== null»«comparisonFunction(logic.comp)»«ENDIF»
+	«IF logic.right !== null»«logic.right.generateLogic»«ENDIF»
+	'''
 	
-	//def dispatch CharSequence generateLogic(PrimitiveOp logic)''''''
-//	
-//	
-//	def dispatch CharSequence generateLogic(Field logic)''' '''   
-	
-	
-
-	//def dispatch CharSequence generateLogic(LogicAnd logic) '''(«logic.left.generateLogic»&&«logic.right.generateLogic»)'''
-	//def dispatch CharSequence generateLogic(LogicOr logic) '''(«logic.left.generateLogic»||«logic.right.generateLogic»)'''
-	//def dispatch CharSequence generateLogic(Comp logic){comparisonFunction(logic)}
-	
-	//def dispatch CharSequence generateLogic(Comp logic)
-	//'''«IF logic !== null»
-	//(«logic» test «logic»)
-	//	«ENDIF»
-	//	null
-	//'''
-	
-	
-	//def dispatch CharSequence generateLogic(Comp logic){(«logic.left.Args» «logic.op» «logic.right.Field»)}
+	def dispatch CharSequence generateLogic(LogicOr logic) '''(«logic.left.generateLogic» || «logic.right.generateLogic»)'''
+	def dispatch CharSequence generateLogic(LogicAnd logic)'''(«logic.left.generateLogic» && «logic.right.generateLogic»)'''
 	
 	def CharSequence getTypeArgument(Args a, Model t) {
-		
-		if (a.type == t) {
+		if (t.fields.filter[test | (test.type == a.type)].size !== 0){	
 			return a.name
 		} else if (a.next === null) {
 			return null
@@ -236,15 +211,15 @@ class ServiceGenerator {
 	}
 	
 	def CharSequence getIdentifierArgument(Args a) {
-		if (a.type instanceof Identifier) {
+		if (a !== null && a.type instanceof Identifier) {
 			return a.name
-		} else {
+		} else if (a.next !== null) {
 			return getIdentifierArgument(a.next)
 		}
 	}
 	
 	def CharSequence comparisonFunction(Comp comp) {
-		switch comp.left {
+		switch comp.left.type {
 			Lon,
 			Flt,
 			Int: numOperator(comp)
@@ -259,46 +234,44 @@ class ServiceGenerator {
 	}
 	
 	def CharSequence objOperator(Comp comp) {
-		val right = 'temp.get'+comp.right.show+'())'
+		val right = '''temp.get«comp.right.name.toFirstUpper»())'''
 		switch comp.op {
-			Lt,
-			Gt: '!'+comp.left.show+'.equals('+right
-			Eq: comp.left.show+'.equals('+right
-			Neq: '!'+comp.left.show+'.equals('+right
+			Eq: comp.left.name+'.equals('+right
+			Neq: '!'+comp.left.name+'.equals('+right
 			default: ''
 		}	
 	}
 	
 	def CharSequence boolOperator(Comp comp) {
-		val right = 'temp.get'+comp.right.show+'()'
+		val right = '''temp.get«comp.right.name.toFirstUpper»()'''
 		switch comp.op {
-			Eq: comp.left.show+'=='+right
-			Neq: comp.left.show+'!='+right
+			Eq: comp.left.name+'=='+right
+			Neq: comp.left.name+'!='+right
 		}		
 	}
 	
 	def CharSequence dtOperator(Comp comp) {
-		val right = 'temp.get'+comp.right.show+'())'
+		val right = '''temp.get«comp.right.name.toFirstUpper»())'''
 		switch comp.op {
-			Lt: comp.left.show+'.isBefore('+right
-			Gt: comp.left.show+'.isAfter('+right
-			Eq: comp.left.show+'.equals('+right
-			Gteq: comp.left.show+'.equals('+right +'||'+comp.left.show+'.isAfter('+right 
-			Lteq: comp.left.show+'.equals('+right +'||'+comp.left.show+'.isBefore('+right 
-			Neq: '!'+comp.left.show+'.equals('+right
+			Lt: comp.left.name+'.isBefore('+right
+			Gt: comp.left.name+'.isAfter('+right
+			Eq: comp.left.name+'.equals('+right
+			Gteq: comp.left.name+'.equals('+right +'||'+comp.left.name+'.isAfter('+right 
+			Lteq: comp.left.name+'.equals('+right +'||'+comp.left.name+'.isBefore('+right 
+			Neq: '!'+comp.left.name+'.equals('+right
 			default: ''
 		}	
 	}
 	
 	def CharSequence numOperator(Comp comp) {
-		val right = 'temp.get'+comp.right.show+'()'
+		val right = '''temp.get«comp.right.name.toFirstUpper»()'''
 		switch comp.op {
-			Lt: comp.left.show+'<'+right
-			Gt: comp.left.show+'>'+right
-			Eq: comp.left.show+'=='+right
-			Gteq: comp.left.show+'>='+right
-			Lteq: comp.left.show+'<='+right
-			Neq: comp.left.show+'!='+right
+			Lt: comp.left.name+' < '+right
+			Gt: comp.left.name+' > '+right
+			Eq: comp.left.name+' == '+right
+			Gteq: comp.left.name+' >= '+right
+			Lteq: comp.left.name+' <= '+right
+			Neq: comp.left.name+' != '+right
 			default: ''
 		}
 	}

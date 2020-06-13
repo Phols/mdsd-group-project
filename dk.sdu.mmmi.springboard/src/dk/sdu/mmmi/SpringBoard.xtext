@@ -123,7 +123,6 @@ enum CRUDActions:
 	C | R | U | D
 ;
 
-// added apipath
 Method:
 	req=Request name=ID inp=Input ':' type=Type res=Res? apipath=Api?
 ;
@@ -136,33 +135,6 @@ Request returns Request:
 	{Local} 'local' | {Post} 'POST' | {Get} 'GET' | {Put} 'PUT' | {Delete} 'DELETE'
 ;
 
-//Comp:
-//	left=Exp op=Operator right=Exp
-//;
-//
-//Exp:
-//	left=Prim right=Prim
-//
-//
-//Prim returns Exp:
-//	type=Type
-//;
-
-//Exp returns Expression:
-//	Factor ( ('+' {Add.left=current} | '-' {Sub.left=current}) right=Factor)*
-//;
-//
-//Factor returns Expression:
-//	Primitive ( ('*' {Mul.left=current} | '/' {Div.left=current}) right=Primitive)*
-//;
-//
-//Primitive returns Expression:
-//	Name | IntExp | '(' Exp ')' | Sum | SizeOf
-//;
-
-//Comp:
-//	left=Type op=Operator right=Type	
-//;
 
 Input:
 	{Input} '(' args=Args? ')'
@@ -200,17 +172,4 @@ Conjunction returns Logic:
 PrimitiveOp returns Logic:
  	comp=Comp |  '('Logic')'
  ;
-
-
-//Logic returns Proposition:
-//	left=Conjunction({LogicOr.left=current}'||' right=Logic)?
-//;
-//
-//Conjunction returns Proposition:
-//	left=PrimitiveOp ({LogicAnd.left=current}'&&' right=Conjunction)?
-//;
-//
-
-
-//;
 

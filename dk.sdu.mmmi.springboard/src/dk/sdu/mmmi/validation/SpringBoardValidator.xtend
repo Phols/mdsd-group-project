@@ -111,11 +111,9 @@ class SpringBoardValidator extends AbstractSpringBoardValidator {
 	@Check
 	def checkComparisonOperator(Comp comp) {
 		if (comp.left.type.class !== comp.right.type.class) {
-			System.out.println(comp.left.type + "," + comp.left.name );
-			System.out.println(comp.right.type + ',' + comp.right.name);
 			error("Type mismatch", comp, SpringBoardPackage.Literals.COMP__RIGHT)
 		}
-		switch comp.left {
+		switch comp.left.type {
 			ModelType,
 			ListOf,
 			Bool,
