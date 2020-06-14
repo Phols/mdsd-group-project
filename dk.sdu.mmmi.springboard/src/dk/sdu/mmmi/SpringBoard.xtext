@@ -1,17 +1,3 @@
-/*
- * Suggestions for individual portfolio.
-
-(0) Fix minor issues i.e. clumsy metamodel.
-
-(1) Remedy shortcomings: general requirements on models (any boolean condition similar to entity example﻿﻿﻿﻿), general boolean conditions﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿ on methods, fixing the issue of overwriting POM and properties files.
-
-(2) Minor extensions: connecting the data model to an existing database (perhaps mapping between the two data models?), separating data model and and service definitions.﻿﻿
-
-(3) Major extensions: the ability to define "abstract" spring boot projects i.e. with a partial data model and partial set of services, maybe even allowing different abstract projects to be combined?
- 
- 
- */
-
 grammar dk.sdu.mmmi.SpringBoard with org.eclipse.xtext.common.Terminals
 
 generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
@@ -19,7 +5,6 @@ generate springBoard "http://www.sdu.dk/mmmi/SpringBoard"
 SpringBoard:
 	'package' ':' pkg=Package 'models' ':' models+=Model+ 'services' ':' services+=Service+ security=Security?	
 ;
-
 
 Package:
 	name=ID ('.' next=Package)?
@@ -29,10 +14,9 @@ Model:
 	name=ID inh=Inherit? '{' fields+=Field* '}'
 ;
 
-Service:
-	base=[Model] '{' crud=CRUD? methods+=Method* '}'
+Field:
+	name=ID ':' type=Type (inv=Invariant)?
 ;
-
 
 Invariant:
 	'[' prop=Property op=Operator value=INT ']'
@@ -46,16 +30,58 @@ Operator returns Operator:
 	{Lt} '<' | {Gt} '>' | {Eq} '=' | {Lteq} '<=' | {Gteq} '>=' | {Neq} '<>'
 ;
 
+Type returns Type:
+	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {Flt} 'float' | {ModelType} (base=[Model] direction='*'?) | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
+;
+
 Inherit:
 	'inherits' base=[Model]
 ;
 
+Service:
+	base=[Model] '{' crud=CRUD? methods+=Method* '}'
+;
+
+CRUD:
+	'[' act += CRUDActions* ']'
+;
+
+enum CRUDActions:
+	C | R | U | D
+;
+
+Method:
+	req=Request name=ID inp=Input ':' type=Type res=Res? apipath=API?
+;
+
+API:
+	"(" STRING ")"
+;
+
+Request returns Request:
+	{Local} 'local' | {Post} 'POST' | {Get} 'GET' | {Put} 'PUT' | {Delete} 'DELETE'
+;
+
+Res:
+	  '{'expression=Logic'}'
+;
+
+Comp:
+	left=[Args] op=Operator right=[Field]
+;
+
+Input:
+	{Input} '(' args=Args? ')'
+;
+
+Args:
+	name=ID ':' type=Type (',' next=Args)?
+;
 
 Security:
 	{Security} 'security' ':' securities+=SecurityOption*
 ;
 
-// to create invariant rules for specific subtypes
 SecurityOption:
 	securityConfig=SecurityConfig | 'Role' '{' roles+=Role+ '}' | 'InvariantRestrictions' '{' requestRestrictions+=RequestRestriction+ '}' | ipwhitelist=IPWhitelist
 ;
@@ -76,7 +102,6 @@ Role:
 	name=ID	
 ;
 
-// Returns secOption to be able to reference SecOption in xtext
 SecOption returns SecOption:
 	encoder=Encoder | http=HTTP | limitedipAddress=LimitedIP | detailService=DetailService | roles=RoleRequirement
 ;
@@ -84,12 +109,11 @@ SecOption returns SecOption:
 HTTP:
 	'http' ':' type=ID
 ;
-// Required for validation
+
 Encoder:
 	'encoder' ':' name=ID
 ;
 
-//Required for validation
 DetailService:
 	base=[Model]'-service'
 ;
@@ -114,57 +138,10 @@ AuthorisedRoles:
 	role=[Role] (',' roles+=[Role])*
 ;
 
-
-CRUD:
-	'[' act += CRUDActions* ']'
-;
-
-enum CRUDActions:
-	C | R | U | D
-;
-
-Method:
-	req=Request name=ID inp=Input ':' type=Type res=Res? apipath=Api?
-;
-
-Api:
-	"(" STRING ")"
-;
-
-Request returns Request:
-	{Local} 'local' | {Post} 'POST' | {Get} 'GET' | {Put} 'PUT' | {Delete} 'DELETE'
-;
-
-
-Input:
-	{Input} '(' args=Args? ')'
-;
-
-Res:
-	  '{'expression=Logic'}'
-;
-
-Args:
-	name=ID ':' type=Type (',' next=Args)?
-;
-
-Field:
-	name=ID ':' type=Type (inv=Invariant)?
-;
-
-Type returns Type:
-	{Str} 'string' | {Dt} 'datetime' | {Lon} 'long' | {Int} 'int' | {Bool} 'bool' | {Flt} 'float' | {ModelType} (base=[Model] direction='*'?) | {ListOf} ('List' 'of' type=Type) | {Identifier} 'ID'
-;
-
-Comp:
-	left=[Args] op=Operator right=[Field]
-;
-
-
 Logic returns Logic:
 	left=Conjunction({LogicOr.left=current}'||' right=Logic)?
 ;
-//
+
 Conjunction returns Logic:
 	left=PrimitiveOp ({LogicAnd.left=current}'&&' right=Conjunction)?
 ;
@@ -172,4 +149,3 @@ Conjunction returns Logic:
 PrimitiveOp returns Logic:
  	comp=Comp |  '('Logic')'
  ;
-
