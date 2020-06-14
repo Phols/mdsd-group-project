@@ -69,7 +69,7 @@ class SpringBoardGenerator extends AbstractGenerator {
 		
 				
 		}
-
+		
 		model.services.forEach[ element |
 			serviceGenerator.createService(fsa, packName, element); 
 			serviceGenerator.createAbstractService(fsa, packName, element)]
@@ -81,11 +81,10 @@ class SpringBoardGenerator extends AbstractGenerator {
 			}
 				
 			])
-		
-	
 		]
+		repositoryGenerator.reset(true);
 		securityGenerator.generateSecurityConfig(fsa, packName, model.services, model.security, securityConfig, ipWhitelist, roleRequirement)
-
+		
 	}
 	
 	def isASubClass(Model element) {
