@@ -26,10 +26,7 @@ import dk.sdu.mmmi.springBoard.Method
 import dk.sdu.mmmi.springBoard.Local
 import dk.sdu.mmmi.springBoard.Security
 import dk.sdu.mmmi.springBoard.MultipleIPs
-import dk.sdu.mmmi.springBoard.IPWhitelist
 import org.eclipse.xtext.EcoreUtil2
-import org.eclipse.xtext.xbase.interpreter.Context
-import org.eclipse.emf.ecore.EObject
 import dk.sdu.mmmi.springBoard.LimitedIP
 
 /**

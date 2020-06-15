@@ -25,8 +25,6 @@ import dk.sdu.mmmi.springBoard.LogicAnd
 import dk.sdu.mmmi.springBoard.LogicOr
 import dk.sdu.mmmi.springBoard.Comp
 import dk.sdu.mmmi.springBoard.Logic
-import dk.sdu.mmmi.springBoard.Operator
-import org.eclipse.xtext.Conjunction
 
 class ServiceGenerator {
 	

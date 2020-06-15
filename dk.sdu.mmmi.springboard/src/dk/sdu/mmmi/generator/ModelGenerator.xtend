@@ -23,9 +23,6 @@ import dk.sdu.mmmi.springBoard.DetailService
 class ModelGenerator {
 	
 	val mavenSrcStructure = "src/main/java/"
-	/**
-	 * TODO: instead of importing all models, we could check for inheritance and fields using a model type!
-	 */
 	def CharSequence generateModel(Model model, String packName, boolean hasSubclasses, boolean isSecurityChosen, DetailService detailService)'''
 	package «packName».models;
 	
@@ -41,8 +38,6 @@ class ModelGenerator {
 	@Table(name = "T_«model.name.toUpperCase»")
 	«IF hasSubclasses && model.inh === null»@Inheritance«ENDIF»
 	public class «model.name»«IF model.inh!==null» extends «model.inh.base.name»«ENDIF» {
-		
-
 		«FOR f:model.fields»
 		«IF f.type instanceof Identifier»
 		@Id
@@ -91,10 +86,6 @@ class ModelGenerator {
 	}
 	
 	'''
-	
-	/**
-	 * TODO: hardcoded length
-	 */
 	def CharSequence generateInvariant(Field f)'''
 	if (!(«f.name».«f.inv.prop»() «generateOperator(f.inv.op)» «f.inv.value»)) {
 		throw new IllegalArgumentException("«f.inv.prop» of «f.name» must be «generateOperator(f.inv.op)» «f.inv.value».");
@@ -162,9 +153,6 @@ class ModelGenerator {
 		"Float"
 	}
 	
-	/**
-	 * Ignore warning, seems to be a bug?
-	 */
 	def dispatch computeType(Bool type) {
 		"Boolean"
 	}

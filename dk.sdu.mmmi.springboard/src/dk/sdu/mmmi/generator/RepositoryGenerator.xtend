@@ -91,12 +91,6 @@ class RepositoryGenerator {
 		'''
 		@Primary
 		'''	
-		}
-
-		
+		}		
 	}
-	
-
-	
-
 }

@@ -201,8 +201,7 @@ class SecurityGenerator {
 						}
 						«ENDFOR»
 		«ENDIF»
-		'''
-		
+		'''		
 	}
 	
 	

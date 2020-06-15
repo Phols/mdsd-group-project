@@ -102,7 +102,7 @@ Role:
 	name=ID	
 ;
 
-SecOption returns SecOption:
+SecOption:
 	encoder=Encoder | http=HTTP | limitedipAddress=LimitedIP | detailService=DetailService | roles=RoleRequirement
 ;
 
